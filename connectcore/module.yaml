@@ -1,0 +1,43 @@
+product:
+  type: lib
+  platforms: [ jvm, android, iosArm64, iosSimulatorArm64, iosX64 ]
+
+aliases:
+  - jvmAndAndroid: [android, jvm]
+
+dependencies:
+  - $libs.kotlinx.serialization
+  - $libs.kotlinx.coroutines
+  - $libs.kotlinx.datetime
+  - $libs.uuid
+  - $libs.stately.concurrent
+  - $libs.logger
+  - $libs.ktor.client.core
+  - $libs.rsocket.core
+  - $libs.rsocket.ktor.tcp
+  - $libs.urlencoder
+  - $libs.korlibs.io
+
+dependencies@jvmAndAndroid:
+  - $libs.ktor.client.okhttp
+  - $libs.jmdns
+
+dependencies@ios:
+  - $libs.ktor.client.darwin
+
+test-dependencies:
+  - $libs.kotlinx.coroutines.test
+  - $libs.ktor.client.mock
+
+test-dependencies@android:
+  - $libs.junit
+  - $libs.androidx.junit
+  - $libs.androidx.espresso.core
+  - $libs.robolectric
+  - $libs.mockito.core
+  - $libs.mockito.inline
+  - $libs.mockito.kotlin
+
+settings:
+  kotlin:
+    serialization: json

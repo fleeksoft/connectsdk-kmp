@@ -1,0 +1,78 @@
+[versions]
+agp = "8.4.1"
+kotlin = "2.0.0"
+googleKsp = "2.0.0-1.0.21"
+compose = "1.6.10"
+compose-material3 = "1.2.1"
+androidx-activityCompose = "1.9.0"
+kotlinx-serialization = "1.7.0-RC"
+kotlinx-coroutines = "1.8.1"
+kotlinx-datetime = "0.6.0"
+kotlinx-io = "0.3.5"
+stately-concurrent = "2.0.7"
+okio = "3.9.0"
+ktor = "2.3.11"
+rsocket = "0.16.0"
+urlencoder = "1.5.0"
+korlibs = "6.0.0-alpha1"
+androidx-junit = "1.1.5"
+junit = "4.13.2"
+espressoCore = "3.5.1"
+mockative = "2.2.2"
+robolectric = "4.12.2"
+mockito = "5.12.0"
+mockito-inline = "5.2.0"
+mockito-kotlin = "5.3.1"
+
+[libraries]
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
+compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
+compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
+compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
+kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-io = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinx-io" }
+uuid = { module = "com.benasher44:uuid", version = "0.8.4" }
+stately-concurrent = { module = "co.touchlab:stately-concurrent-collections", version.ref = "stately-concurrent" }
+logger = { module = "co.touchlab:kermit", version = "2.0.3" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlin" }
+
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+
+rsocket-core = { module = "io.rsocket.kotlin:rsocket-core", version.ref = "rsocket" }
+rsocket-ktor-tcp = { module = "io.rsocket.kotlin:rsocket-transport-ktor-tcp", version.ref = "rsocket" }
+rsocket-ktor-websocket-client = { module = "io.rsocket.kotlin:rsocket-transport-ktor-websocket-client", version.ref = "rsocket" }
+
+urlencoder = { module = "net.thauvin.erik.urlencoder:urlencoder-lib", version.ref = "urlencoder" }
+korlibs-io = { module = "com.soywiz:korlibs-io", version.ref = "korlibs" }
+
+junit = { module = "junit:junit", version.ref = "junit" }
+androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
+androidx-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockito-inline" }
+mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
+
+jmdns = "javax.jmdns:jmdns:3.4.1"
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+googleKsp = { id = "com.google.devtools.ksp", version.ref = "googleKsp" }
+allopen = { id = "org.jetbrains.kotlin.plugin.allopen", version.ref = "kotlin" }
