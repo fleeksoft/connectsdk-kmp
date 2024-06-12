@@ -23,4 +23,8 @@ actual class MulticastSocketKmp actual constructor(override val port: Int) : Mul
         TODO("Not yet implemented")
     }
 
+    override suspend fun disconnect() {
+        TODO("Not yet implemented")
+    }
+
 }

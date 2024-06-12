@@ -46,5 +46,5 @@ interface ErrorListener {
      *
      * @param error ServiceCommandError describing the error
      */
-    fun onError(error: ServiceCommandError)
+    suspend fun onError(error: ServiceCommandError)
 }

@@ -9,35 +9,30 @@ import kotlinx.datetime.Clock
 
 object Util {
     var T: String = "Connect SDK"
-    private val scope = CoroutineScope(Dispatchers.Default)
 
     private var job: Job? = null
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     // TODO: set limit to coroutines
     private const val NUM_OF_THREADS = 20
 
     suspend fun runOnUI(runnable: suspend () -> Unit) {
-        withContext(Dispatchers.Main) {
-            runnable()
-
-        }
+        withContext(Dispatchers.Main) { runnable() }
     }
 
     suspend fun runInBackground(runnable: suspend () -> Unit) {
         withContext(Dispatchers.IO) { runnable() }
     }
 
-    fun <T> postSuccess(listener: ResponseListener<T>?, data: T) {
-        if (listener == null) return
-
-        scope.launch { runOnUI { listener.onSuccess(data) } }
+    suspend fun <T> postSuccess(listener: ResponseListener<T>, data: T) {
+        withContext(Dispatchers.Main) {
+            listener.onSuccess(data)
+        }
     }
 
-    fun postError(listener: ErrorListener?, error: ServiceCommandError) {
-        if (listener == null) return
-
-        scope.launch { runOnUI { listener.onError(error) } }
+    suspend fun postError(listener: ErrorListener, error: ServiceCommandError) {
+        withContext(Dispatchers.Main) {
+            listener.onError(error)
+        }
     }
 
     fun convertIpAddress(ip: Int): ByteArray {
@@ -49,8 +44,12 @@ object Util {
         )
     }
 
-    fun isIPv4Address(ipAddress: String): Boolean {
-        TODO("not implemented yet")
+    fun isIPv4Address(ip: String): Boolean {
+        val ipv4Pattern = Regex(
+            "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}" +
+                "([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+        )
+        return ipv4Pattern.matches(ip)
     }
 
     fun getIpAddress(): String {

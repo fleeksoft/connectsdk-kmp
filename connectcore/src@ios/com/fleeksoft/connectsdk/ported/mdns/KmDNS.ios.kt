@@ -3,10 +3,6 @@ package com.fleeksoft.connectsdk.ported.mdns
 import com.fleeksoft.connectsdk.ported.ServiceListener
 
 actual class KmDNS actual constructor(address: String, name: String) : KmDNSInterface {
-    override val address: String
-        get() = TODO("Not yet implemented")
-    override val name: String
-        get() = TODO("Not yet implemented")
 
     override fun requestServiceInfo(type: String, name: String, timeout: Long) {
         TODO("Not yet implemented")
@@ -16,7 +12,7 @@ actual class KmDNS actual constructor(address: String, name: String) : KmDNSInte
         TODO("Not yet implemented")
     }
 
-    override fun removeServiceListener(type: String, serviceListener: ServiceListener) {
+    override fun removeServiceListener(type: String) {
         TODO("Not yet implemented")
     }
 

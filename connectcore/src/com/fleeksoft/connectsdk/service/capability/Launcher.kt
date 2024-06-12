@@ -35,10 +35,10 @@ interface Launcher : CapabilityMethods {
 
     suspend fun closeApp(launchSession: LaunchSession, listener: ResponseListener<Any?>)
 
-    fun getAppList(listener: AppListListener)
+    suspend fun getAppList(listener: AppListListener)
 
-    fun getRunningApp(listener: AppInfoListener)
-    fun subscribeRunningApp(listener: AppInfoListener): ServiceSubscription<AppInfoListener>
+    suspend fun getRunningApp(listener: AppInfoListener)
+    suspend fun subscribeRunningApp(listener: AppInfoListener): ServiceSubscription<AppInfoListener>
 
     fun getAppState(launchSession: LaunchSession, listener: AppStateListener?)
     fun subscribeAppState(
@@ -46,12 +46,12 @@ interface Launcher : CapabilityMethods {
         listener: AppStateListener
     ): ServiceSubscription<AppStateListener>?
 
-    fun launchBrowser(url: String?, listener: AppLaunchListener?)
-    suspend fun launchYouTube(contentId: String?, listener: AppLaunchListener?)
-    suspend fun launchYouTube(contentId: String?, startTime: Float, listener: AppLaunchListener?)
-    suspend fun launchNetflix(contentId: String?, listener: AppLaunchListener)
-    fun launchHulu(contentId: String?, listener: AppLaunchListener?)
-    fun launchAppStore(appId: String?, listener: AppLaunchListener)
+    suspend fun launchBrowser(url: String, listener: AppLaunchListener?)
+    suspend fun launchYouTube(contentId: String, listener: AppLaunchListener?)
+    suspend fun launchYouTube(contentId: String, startTime: Float, listener: AppLaunchListener?)
+    suspend fun launchNetflix(contentId: String, listener: AppLaunchListener)
+    suspend fun launchHulu(contentId: String, listener: AppLaunchListener?)
+    suspend fun launchAppStore(appId: String, listener: AppLaunchListener)
 
     /**
      * Success listener that is called upon successfully launching an app.

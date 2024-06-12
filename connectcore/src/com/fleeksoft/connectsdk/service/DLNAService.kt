@@ -25,7 +25,7 @@ import com.fleeksoft.connectsdk.core.Util
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
 import com.fleeksoft.connectsdk.discovery.provider.ssdp.Service
 import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability
-import com.fleeksoft.connectsdk.etc.helper.HttpConnection
+import com.fleeksoft.connectsdk.helper.HttpConnection
 import com.fleeksoft.connectsdk.ported.DeviceServiceProvider
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods.CapabilityPriorityLevel
@@ -91,8 +91,8 @@ class DLNAService constructor(
     val scope = CoroutineScope(Dispatchers.Default)
 
     internal interface PositionInfoListener {
-        fun onGetPositionInfoSuccess(positionInfoXml: String)
-        fun onGetPositionInfoFailed(error: ServiceCommandError)
+        suspend fun onGetPositionInfoSuccess(positionInfoXml: String)
+        suspend fun onGetPositionInfoFailed(error: ServiceCommandError)
     }
 
     init {
@@ -172,7 +172,7 @@ class DLNAService constructor(
 
     override suspend fun getMediaInfo(listener: MediaInfoListener) {
         getPositionInfo(object : PositionInfoListener {
-            override fun onGetPositionInfoSuccess(positionInfoXml: String) {
+            override suspend fun onGetPositionInfoSuccess(positionInfoXml: String) {
                 scope.launch {
                     Util.runInBackground {
                         val baseUrl: String =
@@ -184,7 +184,7 @@ class DLNAService constructor(
                 }
             }
 
-            override fun onGetPositionInfoFailed(error: ServiceCommandError) {
+            override suspend fun onGetPositionInfoFailed(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
@@ -209,16 +209,18 @@ class DLNAService constructor(
     ) {
         val instanceId: String = "0"
         val mediaElements: Array<String> =
-            mimeType!!.split("/".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val mediaType: String? = mediaElements[0]
+            mimeType?.split("/".toRegex())?.dropLastWhile { it.isEmpty() }?.toTypedArray() ?: arrayOf()
+        val mediaType: String? = mediaElements.getOrNull(0)
         var mediaFormat: String? = mediaElements[1]
 
-        if ((mediaType == null) || (mediaType.length == 0) || (mediaFormat == null) || (mediaFormat.length == 0)) {
-            Util.postError(
-                listener, ServiceCommandError(
-                    0, "You must provide a valid mimeType (audio/*,  video/*, etc)", null
+        if (mediaType.isNullOrEmpty() || mediaFormat.isNullOrEmpty()) {
+            if (listener != null) {
+                Util.postError(
+                    listener, ServiceCommandError(
+                        0, "You must provide a valid mimeType (audio/*,  video/*, etc)", null
+                    )
                 )
-            )
+            }
             return
         }
 
@@ -240,14 +242,18 @@ class DLNAService constructor(
                         launchSession.service = this@DLNAService
                         launchSession.sessionType = LaunchSessionType.Media
 
-                        Util.postSuccess(
-                            listener,
-                            MediaLaunchObject(launchSession, this@DLNAService, this@DLNAService)
-                        )
+                        if (listener != null) {
+                            Util.postSuccess(
+                                listener,
+                                MediaLaunchObject(launchSession, this@DLNAService, this@DLNAService)
+                            )
+                        }
                     }
 
-                    override fun onError(error: ServiceCommandError) {
-                        Util.postError(listener, error)
+                    override suspend fun onError(error: ServiceCommandError) {
+                        if (listener != null) {
+                            Util.postError(listener, error)
+                        }
                     }
                 }
 
@@ -256,8 +262,10 @@ class DLNAService constructor(
                 request.send()
             }
 
-            override fun onError(error: ServiceCommandError) {
-                Util.postError(listener, error)
+            override suspend fun onError(error: ServiceCommandError) {
+                if (listener != null) {
+                    Util.postError(listener, error)
+                }
             }
         }
 
@@ -265,7 +273,9 @@ class DLNAService constructor(
         val metadata: String? =
             getMetadata(url, subtitle, mMimeType, title ?: "", description, iconSrc)
         if (metadata == null) {
-            Util.postError(listener, ServiceCommandError.getError(500))
+            if (listener != null) {
+                Util.postError(listener, ServiceCommandError.getError(500))
+            }
             return
         }
 
@@ -273,7 +283,9 @@ class DLNAService constructor(
         try {
             params["CurrentURI"] = encodeURL(url)
         } catch (e: Exception) {
-            Util.postError(listener, ServiceCommandError.getError(500))
+            if (listener != null) {
+                Util.postError(listener, ServiceCommandError.getError(500))
+            }
             return
         }
         params["CurrentURIMetaData"] = metadata
@@ -365,11 +377,11 @@ class DLNAService constructor(
         request.send()
     }
 
-    override fun rewind(listener: ResponseListener<Any?>) {
+    override suspend fun rewind(listener: ResponseListener<Any?>) {
         Util.postError(listener, ServiceCommandError.notSupported())
     }
 
-    override fun fastForward(listener: ResponseListener<Any?>) {
+    override suspend fun fastForward(listener: ResponseListener<Any?>) {
         Util.postError(listener, ServiceCommandError.notSupported())
     }
 
@@ -452,7 +464,7 @@ class DLNAService constructor(
                 (response as? String)?.let { listener?.onGetPositionInfoSuccess(it) }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 listener?.onGetPositionInfoFailed(error)
             }
         }
@@ -464,7 +476,7 @@ class DLNAService constructor(
 
     override suspend fun getDuration(listener: DurationListener) {
         getPositionInfo(object : PositionInfoListener {
-            override fun onGetPositionInfoSuccess(positionInfoXml: String) {
+            override suspend fun onGetPositionInfoSuccess(positionInfoXml: String) {
                 val strDuration: String = parseData(positionInfoXml, "TrackDuration")
 
                 val trackMetaData: String = parseData(positionInfoXml, "TrackMetaData")
@@ -482,7 +494,7 @@ class DLNAService constructor(
                 }
             }
 
-            override fun onGetPositionInfoFailed(error: ServiceCommandError) {
+            override suspend fun onGetPositionInfoFailed(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
@@ -490,7 +502,7 @@ class DLNAService constructor(
 
     override suspend fun getPosition(listener: PositionListener) {
         getPositionInfo(object : PositionInfoListener {
-            override fun onGetPositionInfoSuccess(positionInfoXml: String) {
+            override suspend fun onGetPositionInfoSuccess(positionInfoXml: String) {
                 val strDuration: String = parseData(positionInfoXml, "RelTime")
 
                 val milliTimes: Long = convertStrTimeFormatToLong(strDuration)
@@ -498,7 +510,7 @@ class DLNAService constructor(
                 Util.postSuccess(listener, milliTimes)
             }
 
-            override fun onGetPositionInfoFailed(error: ServiceCommandError) {
+            override suspend fun onGetPositionInfoFailed(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
@@ -709,11 +721,13 @@ class DLNAService constructor(
             var serviceURN: String? = null
 
             if (payload == null) {
-                Util.postError(
-                    command.responseListener, ServiceCommandError(
-                        0, "Cannot process the command, \"payload\" is missed", null
+                command.responseListener?.let {
+                    Util.postError(
+                        it, ServiceCommandError(
+                            0, "Cannot process the command, \"payload\" is missed", null
+                        )
                     )
-                )
+                }
                 return@runInBackground
             }
 
@@ -729,20 +743,24 @@ class DLNAService constructor(
             }
 
             if (serviceURN == null) {
-                Util.postError(
-                    command.responseListener, ServiceCommandError(
-                        0, "Cannot process the command, \"serviceURN\" is missed", null
+                command.responseListener?.let {
+                    Util.postError(
+                        it, ServiceCommandError(
+                            0, "Cannot process the command, \"serviceURN\" is missed", null
+                        )
                     )
-                )
+                }
                 return@runInBackground
             }
 
             if (targetURL == null) {
-                Util.postError(
-                    command.responseListener, ServiceCommandError(
-                        0, "Cannot process the command, \"targetURL\" is missed", null
+                command.responseListener?.let {
+                    Util.postError(
+                        it, ServiceCommandError(
+                            0, "Cannot process the command, \"targetURL\" is missed", null
+                        )
                     )
-                )
+                }
                 return@runInBackground
             }
 
@@ -757,18 +775,20 @@ class DLNAService constructor(
                 connection.execute()
                 val code: Int = connection.getResponseCode()
                 if (code == 200) {
-                    Util.postSuccess(
-                        command.responseListener, connection.getResponseString()
-                    )
+                    command.responseListener?.let {
+                        Util.postSuccess(it, connection.getResponseString())
+                    }
                 } else {
-                    Util.postError(
-                        command.responseListener, ServiceCommandError.getError(code)
-                    )
+                    command.responseListener?.let {
+                        Util.postError(it, ServiceCommandError.getError(code))
+                    }
                 }
             } catch (e: IOException) {
-                Util.postError(
-                    command.responseListener, ServiceCommandError(0, e.message, null)
-                )
+                command.responseListener?.let {
+                    Util.postError(
+                        it, ServiceCommandError(0, e.message, null)
+                    )
+                }
             }
         }
     }
@@ -895,7 +915,7 @@ class DLNAService constructor(
                 Util.postSuccess(listener, status)
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         }
@@ -960,7 +980,7 @@ class DLNAService constructor(
                 (response as? String)?.let { listener?.onGetPositionInfoSuccess(it) }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 listener?.onGetPositionInfoFailed(error)
             }
         }
@@ -980,7 +1000,7 @@ class DLNAService constructor(
                 (response as? String)?.let { listener?.onGetPositionInfoSuccess(it) }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 listener?.onGetPositionInfoFailed(error)
             }
         }
@@ -1161,7 +1181,7 @@ class DLNAService constructor(
                 }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
@@ -1183,7 +1203,7 @@ class DLNAService constructor(
                 }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
@@ -1230,7 +1250,7 @@ class DLNAService constructor(
                 Util.postSuccess(listener, fVolume)
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         }
@@ -1272,11 +1292,15 @@ class DLNAService constructor(
                 val currentMute: String = parseData(response as String, "CurrentMute")
                 val isMute: Boolean = currentMute.toBoolean()
 
-                Util.postSuccess(listener, isMute)
+                if (listener != null) {
+                    Util.postSuccess(listener, isMute)
+                }
             }
 
-            override fun onError(error: ServiceCommandError) {
-                Util.postError(listener, error)
+            override suspend fun onError(error: ServiceCommandError) {
+                if (listener != null) {
+                    Util.postError(listener, error)
+                }
             }
         }
 

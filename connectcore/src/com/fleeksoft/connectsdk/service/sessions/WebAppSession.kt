@@ -124,7 +124,7 @@ open class WebAppSession(
      * @param listener
      * (optional) MessageListener to be called on app status change
      */
-    fun subscribeWebAppStatus(
+    suspend fun subscribeWebAppStatus(
         listener: MessageListener?,
     ): ServiceSubscription<MessageListener>? {
         listener?.onError(ServiceCommandError.notSupported())
@@ -138,8 +138,10 @@ open class WebAppSession(
      * @param connectionListener
      * (optional) ResponseListener to be called on success
      */
-    open fun connect(connectionListener: ResponseListener<Any>?) {
-        Util.postError(connectionListener, ServiceCommandError.notSupported())
+    open suspend fun connect(connectionListener: ResponseListener<Any>?) {
+        if (connectionListener != null) {
+            Util.postError(connectionListener, ServiceCommandError.notSupported())
+        }
     }
 
     /**
@@ -147,8 +149,10 @@ open class WebAppSession(
      *
      * @param connectionListener
      */
-    open fun join(connectionListener: ResponseListener<Any>?) {
-        Util.postError(connectionListener, ServiceCommandError.notSupported())
+    open suspend fun join(connectionListener: ResponseListener<Any>?) {
+        if (connectionListener != null) {
+            Util.postError(connectionListener, ServiceCommandError.notSupported())
+        }
     }
 
     /**
@@ -160,8 +164,10 @@ open class WebAppSession(
     /**
      * Pin the web app on the launcher.
      */
-    open fun pinWebApp(webAppId: String?, listener: ResponseListener<Any?>?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    open suspend fun pinWebApp(webAppId: String?, listener: ResponseListener<Any?>?) {
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     /**
@@ -169,25 +175,29 @@ open class WebAppSession(
      *
      * @param webAppId NSString webAppId to be unpinned.
      */
-    open fun unPinWebApp(webAppId: String?, listener: ResponseListener<Any?>?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    open suspend fun unPinWebApp(webAppId: String?, listener: ResponseListener<Any?>?) {
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     /**
      * To check if the web app is pinned or not
      */
-    open fun isWebAppPinned(webAppId: String?, listener: WebAppPinStatusListener?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    open suspend fun isWebAppPinned(webAppId: String?, listener: WebAppPinStatusListener?) {
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     /**
      * Subscribe to check if the web app is pinned or not
      */
-    open fun subscribeIsWebAppPinned(
+    open suspend fun subscribeIsWebAppPinned(
         webAppId: String?,
         listener: WebAppPinStatusListener?,
     ): ServiceSubscription<WebAppPinStatusListener>? {
-        Util.postError(listener, ServiceCommandError.notSupported())
+        listener?.let { Util.postError(it, ServiceCommandError.notSupported()) }
         return null
     }
 
@@ -197,7 +207,7 @@ open class WebAppSession(
      * @param listener
      * (optional) ResponseListener to be called on success
      */
-    open fun close(listener: ResponseListener<Any?>?) {
+    open suspend fun close(listener: ResponseListener<Any?>?) {
         listener?.onError(ServiceCommandError.notSupported())
     }
 
@@ -208,7 +218,7 @@ open class WebAppSession(
      * @param listener
      * (optional) ResponseListener to be called on success
      */
-    open fun sendMessage(message: String?, listener: ResponseListener<Any?>?) {
+    open suspend fun sendMessage(message: String?, listener: ResponseListener<Any?>?) {
         listener?.onError(ServiceCommandError.notSupported())
     }
 
@@ -219,7 +229,7 @@ open class WebAppSession(
      * @param success
      * (optional) ResponseListener to be called on success
      */
-    open fun sendMessage(
+    open suspend fun sendMessage(
         message: JsonObject?,
         listener: ResponseListener<Any?>?,
     ) {
@@ -272,7 +282,7 @@ open class WebAppSession(
         else listener.onError(ServiceCommandError.notSupported())
     }
 
-    override fun rewind(listener: ResponseListener<Any?>) {
+    override suspend fun rewind(listener: ResponseListener<Any?>) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
@@ -281,7 +291,7 @@ open class WebAppSession(
         else listener.onError(ServiceCommandError.notSupported())
     }
 
-    override fun fastForward(listener: ResponseListener<Any?>) {
+    override suspend fun fastForward(listener: ResponseListener<Any?>) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
@@ -348,7 +358,7 @@ open class WebAppSession(
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) return mediaControl.subscribePlayState(listener)
-        else listener?.onError(ServiceCommandError.notSupported())
+        else listener.onError(ServiceCommandError.notSupported())
 
         return null
     }
@@ -361,14 +371,18 @@ open class WebAppSession(
     }
 
     override suspend fun displayImage(mediaInfo: MediaInfo, listener: MediaPlayer.LaunchListener?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     override suspend fun playMedia(
         mediaInfo: MediaInfo, shouldLoop: Boolean,
         listener: MediaPlayer.LaunchListener?,
     ) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     override fun getMediaPlayer(): MediaPlayer? = null

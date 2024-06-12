@@ -158,7 +158,7 @@ class DLNAHttpServer {
         }
     }
 
-    private fun handleLastChange(lastChange: JsonObject) {
+    private suspend fun handleLastChange(lastChange: JsonObject) {
         if (lastChange.containsKey("InstanceID")) {
             val instanceIDs = lastChange["InstanceID"]?.jsonArray ?: return
 
@@ -173,7 +173,7 @@ class DLNAHttpServer {
         }
     }
 
-    private fun handleEntry(entry: JsonObject) {
+    private suspend fun handleEntry(entry: JsonObject) {
         if (entry.containsKey("TransportState")) {
             val transportState = entry["TransportState"]?.jsonPrimitive?.contentOrNull ?: return
             val status: PlayStateStatus =

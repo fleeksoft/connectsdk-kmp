@@ -10,4 +10,5 @@ interface MulticastSocketKmpInterface {
     suspend fun receive(): Datagram
     suspend fun isConnected(): Boolean
     suspend fun close()
+    suspend fun disconnect()
 }

@@ -1,6 +1,5 @@
-package com.fleeksoft.connectsdk.etc.helper
+package com.fleeksoft.connectsdk.helper
 
-import com.fleeksoft.connectsdk.helper.NetworkHelper
 import io.ktor.client.request.delete
 import io.ktor.client.request.header
 import io.ktor.client.request.put

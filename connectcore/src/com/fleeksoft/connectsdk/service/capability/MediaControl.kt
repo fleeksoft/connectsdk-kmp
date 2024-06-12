@@ -102,9 +102,9 @@ interface MediaControl : CapabilityMethods {
 
     suspend fun stop(listener: ResponseListener<Any?>)
 
-    fun rewind(listener: ResponseListener<Any?>)
+    suspend fun rewind(listener: ResponseListener<Any?>)
 
-    fun fastForward(listener: ResponseListener<Any?>)
+    suspend fun fastForward(listener: ResponseListener<Any?>)
 
     /**
      * @param position The new position, in milliseconds from the beginning of the stream

@@ -26,7 +26,7 @@ import korlibs.io.lang.toString
 
 class SSDPPacket(var datagramPacket: Datagram) {
     private var _data: MutableMap<String, String?> = HashMap()
-    private lateinit var _type: String
+    private var _type: String? = null
 
     init {
         init()
@@ -78,7 +78,7 @@ class SSDPPacket(var datagramPacket: Datagram) {
         return _data
     }
 
-    fun getType(): String {
+    fun getType(): String? {
         return _type
     }
 

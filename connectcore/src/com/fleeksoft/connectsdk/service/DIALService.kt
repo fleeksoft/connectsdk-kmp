@@ -25,7 +25,7 @@ import com.fleeksoft.connectsdk.core.AppInfo
 import com.fleeksoft.connectsdk.core.Util
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
 import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability
-import com.fleeksoft.connectsdk.etc.helper.HttpConnection
+import com.fleeksoft.connectsdk.helper.HttpConnection
 import com.fleeksoft.connectsdk.etc.helper.HttpMessage
 import com.fleeksoft.connectsdk.ported.DeviceServiceProvider
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods
@@ -43,11 +43,13 @@ import com.fleeksoft.connectsdk.service.sessions.LaunchSession
 import com.fleeksoft.connectsdk.service.sessions.LaunchSession.LaunchSessionType
 import io.ktor.http.*
 import korlibs.util.format
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.reflect.KClass
 
-class DIALService(serviceDescription: ServiceDescription?, serviceConfig: ServiceConfig) :
+open class DIALService(serviceDescription: ServiceDescription?, serviceConfig: ServiceConfig) :
     DeviceService(serviceDescription, serviceConfig), Launcher {
     override fun getPriorityLevel(clazz: KClass<out CapabilityMethods>): CapabilityPriorityLevel? {
         if ((clazz == Launcher::class)) {
@@ -94,7 +96,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
             return
         }
 
-        val appInfo: AppInfo = AppInfo(id = appId, name = appId)
+        val appInfo = AppInfo(id = appId, name = appId)
 
         launchAppWithInfo(appInfo, listener)
     }
@@ -105,39 +107,43 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
 
     override suspend fun launchAppWithInfo(appInfo: AppInfo, params: Any?, listener: AppLaunchListener?) {
         val command: ServiceCommand<ResponseListener<Any>> =
-            ServiceCommand<ResponseListener<Any>>(commandProcessor,
-                requestURL(appInfo.name), params, object : ResponseListener<Any?> {
-                    override fun onError(error: ServiceCommandError) {
+            ServiceCommand(commandProcessor, requestURL(appInfo.name), params, object : ResponseListener<Any?> {
+                override suspend fun onError(error: ServiceCommandError) {
+                    listener?.let {
                         Util.postError(
-                            listener,
+                            it,
                             ServiceCommandError(0, "Problem Launching app", null)
                         )
                     }
+                }
 
-                    override suspend fun onSuccess(response: Any?) {
-                        val launchSession: LaunchSession =
-                            LaunchSession.launchSessionForAppId(appInfo.id)
-                        launchSession.appName = appInfo.name
-                        launchSession.sessionId = response as? String
-                        launchSession.service = this@DIALService
-                        launchSession.sessionType = LaunchSessionType.App
+                override suspend fun onSuccess(response: Any?) {
+                    val launchSession: LaunchSession =
+                        LaunchSession.launchSessionForAppId(appInfo.id)
+                    launchSession.appName = appInfo.name
+                    launchSession.sessionId = response as? String
+                    launchSession.service = this@DIALService
+                    launchSession.sessionType = LaunchSessionType.App
+                    if (listener != null) {
                         Util.postSuccess(listener, launchSession)
                     }
-                })
+                }
+            })
 
         command.send()
     }
 
-    override fun launchBrowser(url: String?, listener: AppLaunchListener?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    override suspend fun launchBrowser(url: String, listener: AppLaunchListener?) {
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
     override suspend fun closeApp(launchSession: LaunchSession, listener: ResponseListener<Any?>) {
         getAppState(launchSession.appName, object : AppStateListener {
-            override suspend fun onSuccess(state: AppState) {
-                var uri: String? = requestURL(launchSession.appName)
+            override suspend fun onSuccess(response: AppState) {
 
-                uri = if ((launchSession.sessionId!!.contains("http://") ||
+                val uri: String = if ((launchSession.sessionId!!.contains("http://") ||
                         launchSession.sessionId!!.contains("https://"))
                 ) {
                     launchSession.sessionId!!
@@ -158,17 +164,17 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
                 command.send()
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         })
     }
 
-    override suspend fun launchYouTube(contentId: String?, listener: AppLaunchListener?) {
+    override suspend fun launchYouTube(contentId: String, listener: AppLaunchListener?) {
         launchYouTube(contentId, 0.0.toFloat(), listener)
     }
 
-    override suspend fun launchYouTube(contentId: String?, startTime: Float, listener: AppLaunchListener?) {
+    override suspend fun launchYouTube(contentId: String, startTime: Float, listener: AppLaunchListener?) {
         var params: String? = null
         val appInfo: AppInfo = AppInfo("YouTube", "YouTube")
         if (!contentId.isNullOrEmpty()) {
@@ -184,11 +190,13 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
         launchAppWithInfo(appInfo, params, listener)
     }
 
-    override fun launchHulu(contentId: String?, listener: AppLaunchListener?) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    override suspend fun launchHulu(contentId: String, listener: AppLaunchListener?) {
+        if (listener != null) {
+            Util.postError(listener, ServiceCommandError.notSupported())
+        }
     }
 
-    override suspend fun launchNetflix(contentId: String?, listener: AppLaunchListener) {
+    override suspend fun launchNetflix(contentId: String, listener: AppLaunchListener) {
         var params: JsonObject? = null
 
         if (!contentId.isNullOrEmpty()) {
@@ -203,7 +211,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
         launchAppWithInfo(appInfo, params, listener)
     }
 
-    override fun launchAppStore(appId: String?, listener: AppLaunchListener) {
+    override suspend fun launchAppStore(appId: String, listener: AppLaunchListener) {
         Util.postError(listener, ServiceCommandError.notSupported())
     }
 
@@ -237,7 +245,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
                 }
             }
 
-            override fun onError(error: ServiceCommandError) {
+            override suspend fun onError(error: ServiceCommandError) {
                 Util.postError(listener, error)
             }
         }
@@ -254,15 +262,15 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
         request.send()
     }
 
-    override fun getAppList(listener: AppListListener) {
+    override suspend fun getAppList(listener: AppListListener) {
         Util.postError(listener, ServiceCommandError.notSupported())
     }
 
-    override fun getRunningApp(listener: AppInfoListener) {
+    override suspend fun getRunningApp(listener: AppInfoListener) {
         Util.postError(listener, ServiceCommandError.notSupported())
     }
 
-    override fun subscribeRunningApp(listener: AppInfoListener): ServiceSubscription<AppInfoListener> {
+    override suspend fun subscribeRunningApp(listener: AppInfoListener): ServiceSubscription<AppInfoListener> {
         Util.postError(listener, ServiceCommandError.notSupported())
 
         return NotSupportedServiceSubscription()
@@ -343,9 +351,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
 
             try {
                 val connection: HttpConnection = createHttpConnection(mCommand.target)
-                if (payload != null || command.httpMethod
-                        .equals(ServiceCommand.TYPE_POST, ignoreCase = true)
-                ) {
+                if (payload != null || command.httpMethod.equals(ServiceCommand.TYPE_POST, ignoreCase = true)) {
                     connection.setMethod(HttpConnection.Method.POST)
                     if (payload != null) {
                         connection.addHeader(
@@ -360,39 +366,49 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
                     connection.setMethod(HttpConnection.Method.DELETE)
                 }
                 connection.execute()
-                val code: Int = connection.getResponseCode()
-                when (code) {
+                when (val code: Int = connection.getResponseCode()) {
                     200 -> {
-                        Util.postSuccess(
-                            command.responseListener,
-                            connection.getResponseString()
-                        )
+                        command.responseListener?.let {
+                            Util.postSuccess(
+                                it,
+                                connection.getResponseString()
+                            )
+                        }
                     }
 
                     201 -> {
-                        Util.postSuccess(
-                            command.responseListener,
-                            connection.getResponseHeader("Location")
-                        )
+                        command.responseListener?.let {
+                            Util.postSuccess(
+                                it,
+                                connection.getResponseHeader("Location")
+                            )
+                        }
                     }
 
                     else -> {
-                        Util.postError(
-                            command.responseListener,
-                            ServiceCommandError.getError(code)
-                        )
+                        withContext(Dispatchers.Main) {
+                            command.responseListener?.let {
+                                Util.postError(
+                                    it,
+                                    ServiceCommandError.getError(code)
+                                )
+                            }
+//                            command.responseListener?.onError(ServiceCommandError.getError(code))
+                        }
                     }
                 }
             } catch (e: Exception) {
-                Util.postError(
-                    command.responseListener,
-                    ServiceCommandError(0, e.message, null)
-                )
+                command.responseListener?.let {
+                    Util.postError(
+                        it,
+                        ServiceCommandError(0, e.message, null)
+                    )
+                }
             }
         }
     }
 
-    fun createHttpConnection(target: String): HttpConnection {
+    open fun createHttpConnection(target: String): HttpConnection {
         return HttpConnection.newInstance(Url(target))
     }
 
@@ -401,7 +417,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
             ?: throw IllegalStateException("DIAL service application URL not available")
 
 
-        val sb: StringBuilder = StringBuilder()
+        val sb = StringBuilder()
 
         sb.append(applicationURL)
 
@@ -442,7 +458,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
 
         for (appID: String in registeredApps) {
             hasApplication(appID, object : ResponseListener<Any?> {
-                override fun onError(error: ServiceCommandError) {}
+                override suspend fun onError(error: ServiceCommandError) {}
 
                 override suspend fun onSuccess(response: Any?) {
                     addCapability("Launcher.$appID")
@@ -453,7 +469,7 @@ class DIALService(serviceDescription: ServiceDescription?, serviceConfig: Servic
     }
 
     companion object {
-        val ID: String = "DIAL"
+        const val ID: String = "DIAL"
         private const val APP_NETFLIX: String = "Netflix"
 
         private val registeredApps: MutableList<String> = ArrayList()

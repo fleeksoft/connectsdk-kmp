@@ -36,5 +36,5 @@ interface ServiceListener {
      * @param event
      * The ServiceEvent providing the name, the fully qualified type of the service, and the service info record.
      */
-    suspend fun serviceResovled(event: ServiceEvent)
+    suspend fun serviceResolved(event: ServiceEvent)
 }

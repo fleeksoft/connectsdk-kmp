@@ -29,8 +29,8 @@ open class ZeroconfDiscoveryProvider : DiscoveryProvider {
 
     var isRunning = false
 
-    private val kmdnsListener = object : ServiceListener {
-        override suspend fun serviceResovled(event: ServiceEvent) {
+    internal val kmdnsListener = object : ServiceListener {
+        override suspend fun serviceResolved(event: ServiceEvent) {
             val ipAddress = event.info.hostAddresses[0]
             if (!Util.isIPv4Address(ipAddress)) {
                 // Currently, we only support ipv4
