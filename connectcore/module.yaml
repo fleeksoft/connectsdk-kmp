@@ -1,9 +1,9 @@
 product:
   type: lib
-  platforms: [ jvm, android, iosArm64, iosSimulatorArm64, iosX64 ]
+  platforms: [ android, iosArm64, iosSimulatorArm64, iosX64 ]
 
-aliases:
-  - jvmAndAndroid: [android, jvm]
+#aliases:
+#  - jvmAndAndroid: [android, jvm]
 
 dependencies:
   - $libs.kotlinx.serialization
@@ -18,9 +18,13 @@ dependencies:
   - $libs.urlencoder
   - $libs.korlibs.io
 
-dependencies@jvmAndAndroid:
+dependencies@android:
   - $libs.ktor.client.okhttp
   - $libs.jmdns
+  - $libs.kotlinx.coroutines.android
+
+dependencies@jvm:
+    - $libs.kotlinx.coroutines.swing
 
 dependencies@ios:
   - $libs.ktor.client.darwin
