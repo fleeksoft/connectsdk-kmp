@@ -1,56 +1,34 @@
-/*
- * DIALServiceSendCommandTest
- * Connect SDK
- *
- * Copyright (c) 2015 LG Electronics.
- * Created by Oleksii Frolov on 14 May 2015
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.fleeksoft.connectsdk.service
 
+import com.fleeksoft.connectsdk.MainDispatcherRule
 import com.fleeksoft.connectsdk.helper.HttpConnection
 import com.fleeksoft.connectsdk.etc.helper.HttpMessage
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener
 import com.fleeksoft.connectsdk.service.command.ServiceCommand
-import com.fleeksoft.connectsdk.service.command.ServiceCommandError
 import com.fleeksoft.connectsdk.service.config.ServiceConfig
 import com.fleeksoft.connectsdk.service.config.ServiceDescription
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 
-import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.kotlin.any
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.mock
 import java.io.IOException
 
-
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
 class DIALServiceSendCommandTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
 
     companion object {
         const val COMMAND_URL = "http://host:8080/path"
     }
 
-    private lateinit var service: StubDIALService
-    private lateinit var httpConnection: HttpConnection
+    private val service: StubDIALService = StubDIALService(mock(), mock())
+    private val httpConnection: HttpConnection = mock()
 
     inner class StubDIALService(serviceDescription: ServiceDescription, serviceConfig: ServiceConfig) :
         DIALService(serviceDescription, serviceConfig) {
@@ -60,15 +38,6 @@ class DIALServiceSendCommandTest {
             this.connectionTarget = target
             return httpConnection
         }
-    }
-
-    @Before
-    fun setUp() {
-        httpConnection = Mockito.mock(HttpConnection::class.java)
-        service = StubDIALService(
-            Mockito.mock(ServiceDescription::class.java),
-            Mockito.mock(ServiceConfig::class.java)
-        )
     }
 
     @Test
@@ -93,7 +62,7 @@ class DIALServiceSendCommandTest {
         service.sendCommand(command)
 
         Assert.assertEquals(COMMAND_URL, service.connectionTarget)
-        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(Mockito.eq(HttpConnection.Method.DELETE))
+        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(eq(HttpConnection.Method.DELETE))
         Mockito.verify(httpConnection, Mockito.times(1)).execute()
     }
 
@@ -107,9 +76,9 @@ class DIALServiceSendCommandTest {
 
         Assert.assertEquals(COMMAND_URL, service.connectionTarget)
         Mockito.verify(httpConnection, Mockito.times(1))
-            .addHeader(Mockito.eq(HttpMessage.CONTENT_TYPE_HEADER), Mockito.eq("text/plain; charset=\"utf-8\""))
-        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(Mockito.eq(HttpConnection.Method.POST))
-        Mockito.verify(httpConnection, Mockito.times(1)).setPayload(Mockito.eq(payload))
+            .addHeader(eq(HttpMessage.CONTENT_TYPE_HEADER), eq("text/plain; charset=\"utf-8\""))
+        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(eq(HttpConnection.Method.POST))
+        Mockito.verify(httpConnection, Mockito.times(1)).setPayload(eq(payload))
         Mockito.verify(httpConnection, Mockito.times(1)).execute()
     }
 
@@ -122,7 +91,7 @@ class DIALServiceSendCommandTest {
         service.sendCommand(command)
 
         Assert.assertEquals(COMMAND_URL, service.connectionTarget)
-        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(Mockito.eq(HttpConnection.Method.POST))
+        Mockito.verify(httpConnection, Mockito.times(1)).setMethod(eq(HttpConnection.Method.POST))
         Mockito.verify(httpConnection, Mockito.times(0)).setPayload(Mockito.anyString())
         Mockito.verify(httpConnection, Mockito.times(1)).execute()
     }
@@ -137,7 +106,7 @@ class DIALServiceSendCommandTest {
 
         service.sendCommand(command)
 
-        Mockito.verify(listener).onSuccess(Mockito.eq(response))
+        Mockito.verify(listener).onSuccess(eq(response))
     }
 
     @Test
@@ -146,11 +115,11 @@ class DIALServiceSendCommandTest {
         val command = ServiceCommand<ResponseListener<Any?>>(service, COMMAND_URL, null, listener)
         val response = "responsedata"
         Mockito.`when`(httpConnection.getResponseCode()).thenReturn(201)
-        Mockito.`when`(httpConnection.getResponseHeader(Mockito.eq("Location"))).thenReturn(response)
+        Mockito.`when`(httpConnection.getResponseHeader(eq("Location"))).thenReturn(response)
 
         service.sendCommand(command)
 
-        Mockito.verify(listener).onSuccess(Mockito.eq(response))
+        Mockito.verify(listener).onSuccess(eq(response))
     }
 
     @Test
