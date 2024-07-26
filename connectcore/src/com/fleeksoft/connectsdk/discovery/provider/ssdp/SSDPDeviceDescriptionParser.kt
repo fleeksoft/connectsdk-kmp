@@ -20,24 +20,27 @@
 package com.fleeksoft.connectsdk.discovery.provider.ssdp
 
 import korlibs.io.serialization.xml.Xml
-import korlibs.io.serialization.xml.isNode
 import korlibs.util.format
 
 class SSDPDeviceDescriptionParser(var device: SSDPDevice) {
     var currentIcon: Icon? = null
     var currentService: Service? = null
 
-    var data: MutableMap<String, String?> = HashMap()
-
     fun parse(xml: Xml) {
-        xml.allChildren.forEach { child ->
+        xml.allNodeChildren.forEach { child ->
             val currentValue = child.text
             val qName = child.name
             if ((Icon.TAG == qName)) {
-                currentIcon = Icon()
+                currentIcon = Icon.fromXml(child)
             } else if ((Service.TAG == qName)) {
                 currentService = Service()
-                currentService!!.baseURL = device.baseURL
+                currentService?.baseURL = device.baseURL
+                currentService?.serviceType = child["serviceType"].firstOrNull()?.text
+                currentService?.serviceId = child["serviceId"].firstOrNull()?.text
+                currentService?.SCPDURL = child["SCPDURL"].firstOrNull()?.text
+                currentService?.controlURL = child["controlURL"].firstOrNull()?.text
+                currentService?.eventSubURL = child["eventSubURL"].firstOrNull()?.text
+                currentService?.let { device.serviceList.add(it) }
             } else if ((TAG_SEC_CAPABILITY == qName)) {      // Samsung MultiScreen Capability
                 var port: String? = null
                 var location: String? = null
@@ -87,11 +90,7 @@ class SSDPDeviceDescriptionParser(var device: SSDPDevice) {
                 currentService!!.controlURL = currentValue
             } else if ((Service.TAG_EVENTSUB_URL == qName)) {
                 currentService!!.eventSubURL = currentValue
-            } else if ((Service.TAG == qName)) {
-                currentService?.let { device.serviceList.add(it) }
             }
-
-            data[qName] = currentValue
 
             if (child.allNodeChildren.isNotEmpty()) {
                 parse(child)

@@ -22,8 +22,8 @@ package com.fleeksoft.connectsdk.service
 import com.fleeksoft.connectsdk.core.Util
 import com.fleeksoft.connectsdk.device.ConnectableDevice
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
-import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability
-import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability.DeviceServiceReachabilityListener
+import com.fleeksoft.connectsdk.helper.DeviceServiceReachability
+import com.fleeksoft.connectsdk.helper.DeviceServiceReachability.DeviceServiceReachabilityListener
 import com.fleeksoft.connectsdk.service.capability.*
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods.CapabilityPriorityLevel
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener

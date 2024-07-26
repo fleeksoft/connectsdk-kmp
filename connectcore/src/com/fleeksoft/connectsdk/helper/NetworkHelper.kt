@@ -1,5 +1,6 @@
 package com.fleeksoft.connectsdk.helper
 
+import com.fleeksoft.connectsdk.provideHttpClientEngine
 import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.request.*
@@ -11,6 +12,11 @@ internal class NetworkHelper(val client: HttpClient) {
     companion object {
         lateinit var instance: NetworkHelper
             private set
+
+        init {
+            // TODO: replace with better stragety
+            init(provideHttpClientEngine())
+        }
 
         fun init(engine: HttpClientEngine) {
             instance = NetworkHelper(

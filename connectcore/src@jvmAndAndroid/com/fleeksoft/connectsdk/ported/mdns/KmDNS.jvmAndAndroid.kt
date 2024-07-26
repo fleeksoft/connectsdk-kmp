@@ -39,7 +39,7 @@ actual class KmDNS : KmDNSInterface {
             }
 
             override fun serviceResolved(event: javax.jmdns.ServiceEvent) {
-                scope.launch { serviceListener.serviceResovled(event.toKServiceEvent()) }
+                scope.launch { serviceListener.serviceResolved(event.toKServiceEvent()) }
             }
         }
         listenersMap[type.lowercase()] = jServiceListener

@@ -24,9 +24,9 @@ import com.benasher44.uuid.uuid4
 import com.fleeksoft.connectsdk.core.AppInfo
 import com.fleeksoft.connectsdk.core.Util
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
-import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability
+import com.fleeksoft.connectsdk.helper.DeviceServiceReachability
 import com.fleeksoft.connectsdk.helper.HttpConnection
-import com.fleeksoft.connectsdk.etc.helper.HttpMessage
+import com.fleeksoft.connectsdk.helper.HttpMessage
 import com.fleeksoft.connectsdk.ported.DeviceServiceProvider
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods.CapabilityPriorityLevel
@@ -196,7 +196,7 @@ open class DIALService(serviceDescription: ServiceDescription?, serviceConfig: S
         }
     }
 
-    override suspend fun launchNetflix(contentId: String, listener: AppLaunchListener) {
+    override suspend fun launchNetflix(contentId: String?, listener: AppLaunchListener) {
         var params: JsonObject? = null
 
         if (!contentId.isNullOrEmpty()) {

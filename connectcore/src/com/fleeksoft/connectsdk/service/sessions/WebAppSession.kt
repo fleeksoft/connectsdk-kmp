@@ -252,7 +252,7 @@ open class WebAppSession(
         return null
     }
 
-    override suspend fun play(listener: ResponseListener<Any?>) {
+    override suspend fun play(listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
@@ -260,44 +260,44 @@ open class WebAppSession(
         if (mediaControl != null) {
             mediaControl.play(listener)
         } else {
-            listener.onError(ServiceCommandError.notSupported())
+            listener?.onError(ServiceCommandError.notSupported())
         }
     }
 
-    override suspend fun pause(listener: ResponseListener<Any?>) {
+    override suspend fun pause(listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) mediaControl.pause(listener)
-        else listener.onError(ServiceCommandError.notSupported())
+        else listener?.onError(ServiceCommandError.notSupported())
     }
 
-    override suspend fun stop(listener: ResponseListener<Any?>) {
+    override suspend fun stop(listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) mediaControl.stop(listener)
-        else listener.onError(ServiceCommandError.notSupported())
+        else listener?.onError(ServiceCommandError.notSupported())
     }
 
-    override suspend fun rewind(listener: ResponseListener<Any?>) {
+    override suspend fun rewind(listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) mediaControl.rewind(listener)
-        else listener.onError(ServiceCommandError.notSupported())
+        else listener?.onError(ServiceCommandError.notSupported())
     }
 
-    override suspend fun fastForward(listener: ResponseListener<Any?>) {
+    override suspend fun fastForward(listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) mediaControl.fastForward(listener)
-        else listener.onError(ServiceCommandError.notSupported())
+        else listener?.onError(ServiceCommandError.notSupported())
     }
 
     override suspend fun previous(listener: ResponseListener<Any?>) {
@@ -314,13 +314,13 @@ open class WebAppSession(
         else listener.onError(ServiceCommandError.notSupported())
     }
 
-    override suspend fun seek(position: Long, listener: ResponseListener<Any?>) {
+    override suspend fun seek(position: Long, listener: ResponseListener<Any?>?) {
         var mediaControl: MediaControl? = null
 
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         if (mediaControl != null) mediaControl.seek(position, listener)
-        else listener.onError(ServiceCommandError.notSupported())
+        else listener?.onError(ServiceCommandError.notSupported())
     }
 
     override suspend fun getDuration(listener: DurationListener) {
@@ -329,7 +329,7 @@ open class WebAppSession(
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         mediaControl?.getDuration(listener)
-            ?: listener?.onError(ServiceCommandError.notSupported())
+            ?: listener.onError(ServiceCommandError.notSupported())
     }
 
     override suspend fun getPosition(listener: PositionListener) {
@@ -347,7 +347,7 @@ open class WebAppSession(
         if (_service != null) mediaControl = _service!!.getAPI(MediaControl::class)
 
         mediaControl?.getPlayState(listener)
-            ?: listener?.onError(ServiceCommandError.notSupported())
+            ?: listener.onError(ServiceCommandError.notSupported())
     }
 
     override suspend fun subscribePlayState(

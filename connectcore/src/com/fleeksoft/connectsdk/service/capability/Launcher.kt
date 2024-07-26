@@ -49,7 +49,7 @@ interface Launcher : CapabilityMethods {
     suspend fun launchBrowser(url: String, listener: AppLaunchListener?)
     suspend fun launchYouTube(contentId: String, listener: AppLaunchListener?)
     suspend fun launchYouTube(contentId: String, startTime: Float, listener: AppLaunchListener?)
-    suspend fun launchNetflix(contentId: String, listener: AppLaunchListener)
+    suspend fun launchNetflix(contentId: String?, listener: AppLaunchListener)
     suspend fun launchHulu(contentId: String, listener: AppLaunchListener?)
     suspend fun launchAppStore(appId: String, listener: AppLaunchListener)
 

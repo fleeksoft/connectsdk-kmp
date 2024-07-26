@@ -1,6 +1,5 @@
 package com.fleeksoft.connectsdk.ported.multicastsocket
 
-import com.fleeksoft.connectsdk.ported.toDatagram
 import io.ktor.network.sockets.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,7 +12,9 @@ actual class MulticastSocketKmp actual constructor(override val port: Int) : Mul
     private val networkInterfacesMap: MutableMap<String, NetworkInterface> = mutableMapOf()
     private val socket = MulticastSocket(port)
     override suspend fun joinGroup(group: InetSocketAddress, interfaceIp: String) = withContext(Dispatchers.IO) {
-        val networkInterface = NetworkInterface.getByInetAddress(InetAddress.getByAddress(interfaceIp.toByteArray()))
+        println("joinGroup: ip: $interfaceIp")
+        val inetAddress = InetAddress.getByName(interfaceIp)
+        val networkInterface = NetworkInterface.getByInetAddress(inetAddress)
         networkInterfacesMap[interfaceIp] = networkInterface
         socket.joinGroup(group.toJavaAddress(), networkInterface)
     }
@@ -39,5 +40,9 @@ actual class MulticastSocketKmp actual constructor(override val port: Int) : Mul
     override suspend fun close() {
         networkInterfacesMap.clear()
         socket.close()
+    }
+
+    override suspend fun disconnect() {
+        socket.disconnect()
     }
 }

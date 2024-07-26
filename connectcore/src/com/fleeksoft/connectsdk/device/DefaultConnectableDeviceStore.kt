@@ -7,9 +7,7 @@ import com.fleeksoft.connectsdk.service.config.ServiceConfig
 import com.fleeksoft.connectsdk.service.config.ServiceDescription
 import korlibs.io.file.std.uniVfs
 import korlibs.io.lang.IOException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -44,7 +42,7 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
     var maxStoreDuration: Long = 3.days.inWholeSeconds
 
     //    private val fileFullPath: String = File(context.filesDir, FILENAME).path
-    private val fileFullPath: String = FILENAME.uniVfs.path
+//    private val fileFullPath: String = FILENAME.uniVfs.path
 
     private val storedDevices: ConcurrentMutableMap<String, JsonObject> = ConcurrentMutableMap()
 
@@ -57,11 +55,7 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
     init {
         // TODO: it may produce some errors if accessed before this will complete
 
-        scope.launch {
-            Util.runInBackground {
-                load()
-            }
-        }
+        load()
     }
 
     override suspend fun addDevice(device: ConnectableDevice) {
@@ -206,10 +200,10 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
         return null
     }
 
-    private suspend fun load() {
-        val file = fileFullPath.uniVfs
+    private fun load() {
+//        val file = fileFullPath.uniVfs
 
-        if (!file.exists()) {
+        if (memStorage.isNullOrBlank()) {
             version = CURRENT_VERSION
 
             created = Util.getTime()
@@ -219,7 +213,7 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
 
             try {
 
-                val fileContent = file.readString()
+                val fileContent = memStorage!!
 
                 val data = Json.Default.decodeFromString<JsonElement>(fileContent).jsonObject
                 val deviceArray = runCatching { data.getValue(KEY_DEVICES).jsonArray }.getOrNull()
@@ -247,7 +241,8 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
             }
 
             if (encounteredException && storedDevices.isEmpty()) {
-                file.delete()
+//                file.delete()
+                memStorage = null
 
                 version = CURRENT_VERSION
 
@@ -275,23 +270,24 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
 
     private suspend fun writeStoreToDisk(deviceStore: JsonObject) {
         val lastUpdate = updated
-        waitToWrite = true
+        withContext(Dispatchers.IO) {
+            waitToWrite = true
 
-        Util.runInBackground {
             try {
-                val output = fileFullPath.uniVfs
-                val parentDir = output.parent
-                if (!parentDir.exists()) parentDir.mkdirs()
+                //            val output = fileFullPath.uniVfs
+                //            val parentDir = output.parent
+                //            if (!parentDir.exists()) parentDir.mkdirs()
 
-                output.writeString(Json.Default.encodeToString(deviceStore))
+                memStorage = Json.Default.encodeToString(deviceStore)
+                //            output.writeString(Json.Default.encodeToString(deviceStore))
 
             } catch (e: IOException) {
                 e.printStackTrace()
             } finally {
                 waitToWrite = false
             }
-            if (lastUpdate < updated) writeStoreToDisk(deviceStore)
         }
+        if (lastUpdate < updated) writeStoreToDisk(deviceStore)
     }
 
     companion object {
@@ -303,7 +299,7 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
 
         const val CURRENT_VERSION: Int = 0
 
-        const val FILENAME: String = "StoredDevices"
+//        const val FILENAME: String = "StoredDevices"
 
         const val IP_ADDRESS: String = "ipAddress"
         const val FRIENDLY_NAME: String = "friendlyName"
@@ -324,5 +320,7 @@ class DefaultConnectableDeviceStore : ConnectableDeviceStore {
 
         const val DEFAULT_SERVICE_WEBOSTV: String = "WebOSTVService"
         const val DEFAULT_SERVICE_NETCASTTV: String = "NetcastTVService"
+
+        private var memStorage: String? = null
     }
 }

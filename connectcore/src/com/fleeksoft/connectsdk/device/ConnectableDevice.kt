@@ -556,7 +556,7 @@ class ConnectableDevice() : DeviceServiceListener {
         added: List<String>,
         removed: List<String>,
     ) {
-        DiscoveryManager.getInstance()!!.onCapabilityUpdated(this, added, removed)
+        DiscoveryManager.getInstance().onCapabilityUpdated(this, added, removed)
     }
 
 
@@ -573,7 +573,7 @@ class ConnectableDevice() : DeviceServiceListener {
 
         if (isConnected) {
             val deviceStore: ConnectableDeviceStore? =
-                DiscoveryManager.getInstance()?.getConnectableDeviceStore()
+                DiscoveryManager.getInstance().getConnectableDeviceStore()
             deviceStore?.addDevice(this)
 
             Util.runOnUI {

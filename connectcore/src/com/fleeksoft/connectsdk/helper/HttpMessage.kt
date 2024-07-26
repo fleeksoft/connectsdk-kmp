@@ -1,6 +1,5 @@
-package com.fleeksoft.connectsdk.etc.helper
+package com.fleeksoft.connectsdk.helper
 
-import com.fleeksoft.connectsdk.helper.NetworkHelper
 import io.ktor.client.request.prepareGet
 import io.ktor.client.request.preparePost
 import io.ktor.client.statement.HttpStatement

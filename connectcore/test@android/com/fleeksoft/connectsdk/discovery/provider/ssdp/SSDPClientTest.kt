@@ -10,17 +10,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import kotlin.text.String
 
-@RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE)
 class SSDPClientTest {
 
     private lateinit var localAddress: InetSocketAddress
@@ -35,9 +30,9 @@ class SSDPClientTest {
     }
 
     @Before
-    fun setUp() {
+    fun setUp() = runTest {
         localAddress = InetSocketAddress(Util.getIpAddress(), 0)
-        ssdpClient = SSDPClient(localAddress, mLocalSocket, wildSocket)
+        ssdpClient = SSDPClient.create(localAddress, mLocalSocket, wildSocket)
     }
 
     @Test

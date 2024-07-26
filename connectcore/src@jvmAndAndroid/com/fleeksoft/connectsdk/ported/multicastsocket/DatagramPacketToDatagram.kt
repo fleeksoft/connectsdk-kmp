@@ -1,4 +1,4 @@
-package com.fleeksoft.connectsdk.ported
+package com.fleeksoft.connectsdk.ported.multicastsocket
 
 import io.ktor.network.sockets.*
 import io.ktor.util.network.*

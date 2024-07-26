@@ -47,6 +47,27 @@ class SSDPDeviceTest {
                     /WebOS_SecondScreen/86ea12c3-4ad7-2117-edbd-8177429fe21e/event.xml
                     </eventSubURL>
                 </service>
+                <service>
+                    <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
+                    <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
+                    <SCPDURL>/AVTransport/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/scpd.xml</SCPDURL>
+                    <controlURL>/AVTransport/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/control.xml</controlURL>
+                    <eventSubURL>/AVTransport/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/event.xml</eventSubURL>
+                </service>
+                <service>
+                    <serviceType>urn:schemas-upnp-org:service:ConnectionManager:1</serviceType>
+                    <serviceId>urn:upnp-org:serviceId:ConnectionManager</serviceId>
+                    <SCPDURL>/ConnectionManager/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/scpd.xml</SCPDURL>
+                    <controlURL>/ConnectionManager/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/control.xml</controlURL>
+                    <eventSubURL>/ConnectionManager/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/event.xml</eventSubURL>
+                </service>
+                <service>
+                    <serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>
+                    <serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId>
+                    <SCPDURL>/RenderingControl/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/scpd.xml</SCPDURL>
+                    <controlURL>/RenderingControl/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/control.xml</controlURL>
+                    <eventSubURL>/RenderingControl/32d9d0e5-eafb-1aef-4a83-88a0f6b453f7/event.xml</eventSubURL>
+                </service>
             </serviceList>
         </device>
         </root>
@@ -104,6 +125,8 @@ class SSDPDeviceTest {
         Assert.assertEquals("http://hostname", device.serviceURI)
         Assert.assertEquals("http://hostname:80", device.baseURL)
         Assert.assertEquals("WEBOS1", device.modelNumber)
+        Assert.assertEquals(4, device.serviceList.length)
+//        todo: add more test code for services list
     }
 
     @Test

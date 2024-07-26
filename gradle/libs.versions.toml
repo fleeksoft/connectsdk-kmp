@@ -6,10 +6,11 @@ kotlinx-serialization = "1.7.0-RC"
 kotlinx-coroutines = "1.9.0-RC"
 kotlinx-datetime = "0.6.0"
 stately-concurrent = "2.0.7"
-ktor = "2.3.11"
+ktor = "2.3.12"
 rsocket = "0.16.0"
 urlencoder = "1.5.0"
-korlibs = "6.0.0-alpha1"
+korlibs = "6.0.0-alpha9"
+#korlibs = "999.0.0.999" # 999.0.0.999 is local version
 androidx-junit = "1.1.5"
 junit = "4.13.2"
 espressoCore = "3.5.1"
@@ -52,6 +53,7 @@ mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockito
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 
 jmdns = "javax.jmdns:jmdns:3.4.1"
+xmlunit = "org.custommonkey.xmlunit:com.springsource.org.custommonkey.xmlunit:1.2.0"
 
 [plugins]
 googleKsp = { id = "com.google.devtools.ksp", version.ref = "googleKsp" }

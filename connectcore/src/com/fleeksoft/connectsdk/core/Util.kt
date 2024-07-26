@@ -52,15 +52,10 @@ object Util {
         return ipv4Pattern.matches(ip)
     }
 
-    fun getIpAddress(): String {
+    suspend fun getIpAddress(): String {
         // TODO: fix it for test 
-        return "0.0.0.0"
-        return DeviceInfo().getIpAddress()
-    }
-
-    fun getHostAddress(): String {
-//        Util.getIpAddress().getHostAddress()
-        TODO("not implemented yet")
+//        return "0.0.0.0"
+        return withContext(Dispatchers.IO) { DeviceInfo().getIpAddress() }
     }
 
     fun getTime(): Long {

@@ -19,6 +19,7 @@
  */
 package com.fleeksoft.connectsdk.discovery.provider
 
+import co.touchlab.kermit.Logger
 import co.touchlab.stately.collections.ConcurrentMutableList
 import co.touchlab.stately.collections.ConcurrentMutableMap
 import com.fleeksoft.connectsdk.core.Util
@@ -58,11 +59,11 @@ open class SSDPDiscoveryProvider : DiscoveryProvider {
 
     var isRunning: Boolean = false
 
-    private suspend fun openSocket() {
-        if (ssdpClient != null && ssdpClient!!.isConnected()) return
+    private suspend fun openSocket() = withContext(Dispatchers.IO) {
+        if (ssdpClient != null && ssdpClient!!.isConnected()) return@withContext
 
         try {
-            val source: InetSocketAddress = InetSocketAddress(Util.getIpAddress(), 80)
+            val source: InetSocketAddress = InetSocketAddress(Util.getIpAddress(), 0)
 
             ssdpClient = createSocket(source)
         } catch (e: Exception) {
@@ -70,8 +71,8 @@ open class SSDPDiscoveryProvider : DiscoveryProvider {
         }
     }
 
-    open fun createSocket(source: InetSocketAddress): SSDPClient {
-        return SSDPClient(source)
+    open suspend fun createSocket(source: InetSocketAddress): SSDPClient {
+        return SSDPClient.create(source)
     }
 
     override suspend fun start() {
@@ -187,6 +188,7 @@ open class SSDPDiscoveryProvider : DiscoveryProvider {
 
     private suspend fun responseHandler() {
         while (ssdpClient != null) {
+            Logger.d("ssdpClient#responseReceive")
             try {
                 handleSSDPPacket(SSDPPacket(ssdpClient!!.responseReceive()))
             } catch (e: IOException) {
@@ -218,6 +220,7 @@ open class SSDPDiscoveryProvider : DiscoveryProvider {
     }
 
     private suspend fun handleSSDPPacket(ssdpPacket: SSDPPacket?) {
+//        Logger.d("handleSSDPPacket: $ssdpPacket")
         // Debugging stuff
 //        Util.runOnUI(new Runnable() {
 //
@@ -238,9 +241,10 @@ open class SSDPDiscoveryProvider : DiscoveryProvider {
         val serviceFilter: String? =
             ssdpPacket.getData()[if ((ssdpPacket.getType() == SSDPClient.NOTIFY)) "NT" else "ST"]
 
-        if ((serviceFilter == null) || (SSDPClient.MSEARCH == ssdpPacket.getType()) || !isSearchingForFilter(
-                serviceFilter
-            )
+        if (
+            (serviceFilter == null) ||
+            (SSDPClient.MSEARCH == ssdpPacket.getType()) ||
+            !isSearchingForFilter(serviceFilter)
         ) return
 
         val usnKey: String? = ssdpPacket.getData()["USN"]

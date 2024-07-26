@@ -1,6 +1,5 @@
 package com.fleeksoft.connectsdk.discovery.provider
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.fleeksoft.connectsdk.core.TestUtil
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
 import com.fleeksoft.connectsdk.discovery.provider.ssdp.SSDPClient
@@ -11,13 +10,11 @@ import kotlinx.coroutines.test.runTest
 import org.json.JSONException
 import org.junit.Assert
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.mockito.Mockito
 import org.mockito.Mockito.verify
 import java.io.IOException
 import kotlin.test.*
 
-@RunWith(AndroidJUnit4::class)
 class SSDPDiscoveryProviderTest {
 
     private lateinit var dp: SSDPDiscoveryProvider
@@ -25,7 +22,7 @@ class SSDPDiscoveryProviderTest {
 
     inner class StubSSDPDiscoveryProvider : SSDPDiscoveryProvider() {
 
-        override fun createSocket(source: InetSocketAddress): SSDPClient {
+        override suspend fun createSocket(source: InetSocketAddress): SSDPClient {
             return ssdpClient
         }
     }

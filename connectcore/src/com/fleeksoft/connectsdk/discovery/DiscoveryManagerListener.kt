@@ -44,7 +44,7 @@ interface DiscoveryManagerListener {
      * @param manager DiscoveryManager that updated device
      * @param device ConnectableDevice that was updated
      */
-    fun onDeviceUpdated(manager: DiscoveryManager?, device: ConnectableDevice?)
+    fun onDeviceUpdated(manager: DiscoveryManager, device: ConnectableDevice)
 
     /**
      * This method is called when connections to all of a ConnectableDevice's DeviceServices are lost. This will usually happen when a device is powered off or loses internet connectivity.
@@ -52,7 +52,7 @@ interface DiscoveryManagerListener {
      * @param manager DiscoveryManager that lost device
      * @param device ConnectableDevice that was lost
      */
-    fun onDeviceRemoved(manager: DiscoveryManager?, device: ConnectableDevice)
+    fun onDeviceRemoved(manager: DiscoveryManager, device: ConnectableDevice)
 
     /**
      * In the event of an error in the discovery phase, this method will be called.
@@ -60,5 +60,5 @@ interface DiscoveryManagerListener {
      * @param manager DiscoveryManager that experienced the error
      * @param error NSError with a description of the failure
      */
-    fun onDiscoveryFailed(manager: DiscoveryManager?, error: ServiceCommandError?)
+    fun onDiscoveryFailed(manager: DiscoveryManager, error: ServiceCommandError)
 }

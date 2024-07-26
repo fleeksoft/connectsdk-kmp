@@ -1,22 +1,3 @@
-/*
- * DLNAService
- * Connect SDK
- *
- * Copyright (c) 2014 LG Electronics.
- * Created by Hyun Kook Khang on 19 Jan 2014
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.fleeksoft.connectsdk.service
 
 import com.fleeksoft.connectsdk.core.MediaInfo
@@ -24,22 +5,16 @@ import com.fleeksoft.connectsdk.core.SubtitleInfo
 import com.fleeksoft.connectsdk.core.Util
 import com.fleeksoft.connectsdk.discovery.DiscoveryFilter
 import com.fleeksoft.connectsdk.discovery.provider.ssdp.Service
-import com.fleeksoft.connectsdk.etc.helper.DeviceServiceReachability
+import com.fleeksoft.connectsdk.helper.DeviceServiceReachability
 import com.fleeksoft.connectsdk.helper.HttpConnection
 import com.fleeksoft.connectsdk.ported.DeviceServiceProvider
-import com.fleeksoft.connectsdk.service.capability.CapabilityMethods
+import com.fleeksoft.connectsdk.ported.findChild
+import com.fleeksoft.connectsdk.service.capability.*
 import com.fleeksoft.connectsdk.service.capability.CapabilityMethods.CapabilityPriorityLevel
-import com.fleeksoft.connectsdk.service.capability.MediaControl
-import com.fleeksoft.connectsdk.service.capability.MediaControl.DurationListener
-import com.fleeksoft.connectsdk.service.capability.MediaControl.PlayStateListener
-import com.fleeksoft.connectsdk.service.capability.MediaControl.PlayStateStatus
-import com.fleeksoft.connectsdk.service.capability.MediaControl.PositionListener
-import com.fleeksoft.connectsdk.service.capability.MediaPlayer
+import com.fleeksoft.connectsdk.service.capability.MediaControl.*
 import com.fleeksoft.connectsdk.service.capability.MediaPlayer.MediaInfoListener
 import com.fleeksoft.connectsdk.service.capability.MediaPlayer.MediaLaunchObject
-import com.fleeksoft.connectsdk.service.capability.PlaylistControl
 import com.fleeksoft.connectsdk.service.capability.PlaylistControl.PlayMode
-import com.fleeksoft.connectsdk.service.capability.VolumeControl
 import com.fleeksoft.connectsdk.service.capability.VolumeControl.MuteListener
 import com.fleeksoft.connectsdk.service.capability.VolumeControl.VolumeListener
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener
@@ -53,38 +28,26 @@ import com.fleeksoft.connectsdk.service.sessions.LaunchSession
 import com.fleeksoft.connectsdk.service.sessions.LaunchSession.LaunchSessionType
 import com.fleeksoft.connectsdk.service.upnp.DLNAHttpServer
 import com.fleeksoft.connectsdk.service.upnp.DLNAMediaInfoParser
-import io.ktor.http.URLBuilder
-import io.ktor.http.URLProtocol
-import io.ktor.http.Url
+import io.ktor.http.*
 import korlibs.io.lang.IOException
 import korlibs.io.serialization.xml.Xml
 import korlibs.io.serialization.xml.buildXml
-import korlibs.io.serialization.xml.text
 import korlibs.util.format
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toInstant
+import kotlinx.coroutines.*
+import kotlinx.datetime.LocalTime
 import kotlinx.serialization.json.JsonObject
 import net.thauvin.erik.urlencoder.UrlEncoderUtil
+import kotlin.collections.set
 import kotlin.reflect.KClass
 
-class DLNAService constructor(
+open class DLNAService constructor(
     serviceDescription: ServiceDescription?, serviceConfig: ServiceConfig,
-    dlnaServer: DLNAHttpServer = DLNAHttpServer(),
+    private val httpServer: DLNAHttpServer = DLNAHttpServer()
 ) : DeviceService(serviceDescription, serviceConfig), PlaylistControl, MediaControl, MediaPlayer,
     VolumeControl {
     var avTransportURL: String? = null
     var renderingControlURL: String? = null
     var connectionControlURL: String? = null
-
-    var httpServer: DLNAHttpServer
 
     var SIDList: MutableMap<String?, String?> = HashMap()
     var resubscriptionTimer: Job? = null
@@ -97,7 +60,6 @@ class DLNAService constructor(
 
     init {
         updateControlURL()
-        httpServer = dlnaServer
     }
 
     override fun getPriorityLevel(clazz: KClass<out CapabilityMethods>): CapabilityPriorityLevel? {
@@ -177,8 +139,9 @@ class DLNAService constructor(
                     Util.runInBackground {
                         val baseUrl: String =
                             "http://" + (getServiceDescription()?.ipAddress) + ":" + (getServiceDescription()?.port)
-                        val trackMetaData: String = parseData(positionInfoXml, "TrackMetaData")
-                        val info: MediaInfo? = DLNAMediaInfoParser.getMediaInfo(trackMetaData, baseUrl)
+                        val trackMetaData: String =
+                            parseData(positionInfoXml, "TrackMetaData") ?: throw Exception("TrackMetaData not found!")
+                        val info: MediaInfo = DLNAMediaInfoParser.getMediaInfo(trackMetaData, baseUrl)
                         Util.postSuccess(listener, info)
                     }
                 }
@@ -201,7 +164,7 @@ class DLNAService constructor(
     private suspend fun displayMedia(
         url: String,
         subtitle: SubtitleInfo?,
-        mimeType: String?,
+        mimeType: String,
         title: String?,
         description: String?,
         iconSrc: String?,
@@ -209,9 +172,9 @@ class DLNAService constructor(
     ) {
         val instanceId: String = "0"
         val mediaElements: Array<String> =
-            mimeType?.split("/".toRegex())?.dropLastWhile { it.isEmpty() }?.toTypedArray() ?: arrayOf()
+            mimeType.split("/".toRegex()).dropLastWhile { it.isEmpty() }?.toTypedArray() ?: arrayOf()
         val mediaType: String? = mediaElements.getOrNull(0)
-        var mediaFormat: String? = mediaElements[1]
+        var mediaFormat: String? = mediaElements.getOrNull(1)
 
         if (mediaType.isNullOrEmpty() || mediaFormat.isNullOrEmpty()) {
             if (listener != null) {
@@ -238,7 +201,7 @@ class DLNAService constructor(
 
                 val playResponseListener: ResponseListener<Any?> = object : ResponseListener<Any?> {
                     override suspend fun onSuccess(response: Any?) {
-                        val launchSession: LaunchSession = LaunchSession()
+                        val launchSession = LaunchSession()
                         launchSession.service = this@DLNAService
                         launchSession.sessionType = LaunchSessionType.Media
 
@@ -341,7 +304,7 @@ class DLNAService constructor(
         return CapabilityPriorityLevel.NORMAL
     }
 
-    override suspend fun play(listener: ResponseListener<Any?>) {
+    override suspend fun play(listener: ResponseListener<Any?>?) {
         val method: String = "Play"
         val instanceId: String = "0"
 
@@ -355,7 +318,7 @@ class DLNAService constructor(
         request.send()
     }
 
-    override suspend fun pause(listener: ResponseListener<Any?>) {
+    override suspend fun pause(listener: ResponseListener<Any?>?) {
         val method: String = "Pause"
         val instanceId: String = "0"
 
@@ -366,7 +329,7 @@ class DLNAService constructor(
         request.send()
     }
 
-    override suspend fun stop(listener: ResponseListener<Any?>) {
+    override suspend fun stop(listener: ResponseListener<Any?>?) {
         val method: String = "Stop"
         val instanceId: String = "0"
 
@@ -377,12 +340,12 @@ class DLNAService constructor(
         request.send()
     }
 
-    override suspend fun rewind(listener: ResponseListener<Any?>) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    override suspend fun rewind(listener: ResponseListener<Any?>?) {
+        listener?.let { Util.postError(it, ServiceCommandError.notSupported()) }
     }
 
-    override suspend fun fastForward(listener: ResponseListener<Any?>) {
-        Util.postError(listener, ServiceCommandError.notSupported())
+    override suspend fun fastForward(listener: ResponseListener<Any?>?) {
+        listener?.let { Util.postError(it, ServiceCommandError.notSupported()) }
     }
 
     /******************
@@ -446,7 +409,7 @@ class DLNAService constructor(
         request.send()
     }
 
-    override suspend fun seek(position: Long, listener: ResponseListener<Any?>) {
+    override suspend fun seek(position: Long, listener: ResponseListener<Any?>?) {
         val second: Long = (position / 1000) % 60
         val minute: Long = (position / (1000 * 60)) % 60
         val hour: Long = (position / (1000 * 60 * 60)) % 24
@@ -477,12 +440,14 @@ class DLNAService constructor(
     override suspend fun getDuration(listener: DurationListener) {
         getPositionInfo(object : PositionInfoListener {
             override suspend fun onGetPositionInfoSuccess(positionInfoXml: String) {
-                val strDuration: String = parseData(positionInfoXml, "TrackDuration")
+                val strDuration: String =
+                    parseData(positionInfoXml, "TrackDuration") ?: throw Exception("TrackDuration not found!")
 
-                val trackMetaData: String = parseData(positionInfoXml, "TrackMetaData")
+                val trackMetaData: String =
+                    parseData(positionInfoXml, "TrackMetaData") ?: throw Exception("TrackMetaData not found!")
                 val info: MediaInfo = DLNAMediaInfoParser.getMediaInfo(trackMetaData)
                 // Check if duration we get not equals 0 or media is image, otherwise wait 1 second and try again
-                if ((strDuration != "0:00:00") || (info.mimeType.contains("image"))) {
+                if (strDuration != "0:00:00" || info.mimeType?.contains("image") == true) {
                     val milliTimes: Long = convertStrTimeFormatToLong(strDuration)
 
                     Util.postSuccess(listener, milliTimes)
@@ -503,7 +468,7 @@ class DLNAService constructor(
     override suspend fun getPosition(listener: PositionListener) {
         getPositionInfo(object : PositionInfoListener {
             override suspend fun onGetPositionInfoSuccess(positionInfoXml: String) {
-                val strDuration: String = parseData(positionInfoXml, "RelTime")
+                val strDuration: String = parseData(positionInfoXml, "RelTime") ?: throw Exception("RelTime not found!")
 
                 val milliTimes: Long = convertStrTimeFormatToLong(strDuration)
 
@@ -516,7 +481,7 @@ class DLNAService constructor(
         })
     }
 
-    protected suspend fun seek(unit: String, target: String, listener: ResponseListener<Any?>) {
+    protected suspend fun seek(unit: String, target: String, listener: ResponseListener<Any?>?) {
         val method: String = "Seek"
         val instanceId: String = "0"
 
@@ -531,7 +496,7 @@ class DLNAService constructor(
         request.send()
     }
 
-    private fun getMessageXml(
+    fun getMessageXml(
         serviceURN: String,
         method: String,
         instanceId: String?,
@@ -541,8 +506,7 @@ class DLNAService constructor(
 
             val methodElement = buildXml(
                 "u:$method", props = arrayOf(
-                    // TODO: test set naemspace to serviceURN
-                    "xmlns" to serviceURN,
+                    "xmlns:u" to serviceURN,
                 )
             ) {
                 val instanceElement = buildXml("InstanceID") {
@@ -582,7 +546,7 @@ class DLNAService constructor(
         }
     }
 
-    private fun getMetadata(
+    fun getMetadata(
         mediaURL: String,
         subtitle: SubtitleInfo?,
         mime: String,
@@ -704,97 +668,105 @@ class DLNAService constructor(
     }
 
     fun xmlToString(source: Xml, xmlDeclaration: Boolean): String {
+        /*val xml = if (xmlDeclaration) {
+            buildXml("xml") {
+                node(source)
+            }
+        } else {
+        source
+        }*/
+        if (xmlDeclaration) {
+            return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>$source"
+        }
         return source.toString()
     }
 
 
-    override suspend fun sendCommand(mCommand: ServiceCommand<*>) {
-        Util.runInBackground {
+    override suspend fun sendCommand(mCommand: ServiceCommand<*>) = withContext(Dispatchers.IO) {
 
-            val command: ServiceCommand<ResponseListener<Any>> =
-                mCommand as ServiceCommand<ResponseListener<Any>>
+        val command: ServiceCommand<ResponseListener<Any>> =
+            mCommand as ServiceCommand<ResponseListener<Any>>
 
-            val method: String = command.target
-            val payload: String? = command.payload as? String
+        val method: String = command.target
+        val payload: String? = command.payload as? String
 
-            var targetURL: String? = null
-            var serviceURN: String? = null
+        var targetURL: String? = null
+        var serviceURN: String? = null
 
-            if (payload == null) {
-                command.responseListener?.let {
-                    Util.postError(
-                        it, ServiceCommandError(
-                            0, "Cannot process the command, \"payload\" is missed", null
-                        )
+        if (payload == null) {
+            command.responseListener?.let {
+                Util.postError(
+                    it, ServiceCommandError(
+                        0, "Cannot process the command, \"payload\" is missed", null
                     )
-                }
-                return@runInBackground
-            }
-
-            if (payload.contains(AV_TRANSPORT_URN)) {
-                targetURL = avTransportURL
-                serviceURN = AV_TRANSPORT_URN
-            } else if (payload.contains(RENDERING_CONTROL_URN)) {
-                targetURL = renderingControlURL
-                serviceURN = RENDERING_CONTROL_URN
-            } else if (payload.contains(CONNECTION_MANAGER_URN)) {
-                targetURL = connectionControlURL
-                serviceURN = CONNECTION_MANAGER_URN
-            }
-
-            if (serviceURN == null) {
-                command.responseListener?.let {
-                    Util.postError(
-                        it, ServiceCommandError(
-                            0, "Cannot process the command, \"serviceURN\" is missed", null
-                        )
-                    )
-                }
-                return@runInBackground
-            }
-
-            if (targetURL == null) {
-                command.responseListener?.let {
-                    Util.postError(
-                        it, ServiceCommandError(
-                            0, "Cannot process the command, \"targetURL\" is missed", null
-                        )
-                    )
-                }
-                return@runInBackground
-            }
-
-            try {
-                val connection: HttpConnection = createHttpConnection(targetURL)
-                connection.addHeader("Content-Type", "text/xml; charset=utf-8")
-                connection.addHeader(
-                    "SOAPAction", "\"%s#%s\"".format(serviceURN, method)
                 )
-                connection.setMethod(HttpConnection.Method.POST)
-                connection.setPayload(payload)
-                connection.execute()
-                val code: Int = connection.getResponseCode()
-                if (code == 200) {
-                    command.responseListener?.let {
-                        Util.postSuccess(it, connection.getResponseString())
-                    }
-                } else {
-                    command.responseListener?.let {
-                        Util.postError(it, ServiceCommandError.getError(code))
-                    }
-                }
-            } catch (e: IOException) {
-                command.responseListener?.let {
-                    Util.postError(
-                        it, ServiceCommandError(0, e.message, null)
+            }
+            return@withContext
+        }
+
+        if (payload.contains(AV_TRANSPORT_URN)) {
+            targetURL = avTransportURL
+            serviceURN = AV_TRANSPORT_URN
+        } else if (payload.contains(RENDERING_CONTROL_URN)) {
+            targetURL = renderingControlURL
+            serviceURN = RENDERING_CONTROL_URN
+        } else if (payload.contains(CONNECTION_MANAGER_URN)) {
+            targetURL = connectionControlURL
+            serviceURN = CONNECTION_MANAGER_URN
+        }
+
+        if (serviceURN == null) {
+            command.responseListener?.let {
+                Util.postError(
+                    it, ServiceCommandError(
+                        0, "Cannot process the command, \"serviceURN\" is missed", null
                     )
+                )
+            }
+            return@withContext
+        }
+
+        if (targetURL == null) {
+            command.responseListener?.let {
+                Util.postError(
+                    it, ServiceCommandError(
+                        0, "Cannot process the command, \"targetURL\" is missed", null
+                    )
+                )
+            }
+            return@withContext
+        }
+
+        try {
+            val connection: HttpConnection = createHttpConnection(targetURL)
+            connection.addHeader("Content-Type", "text/xml; charset=utf-8")
+            connection.addHeader(
+                "SOAPAction", "\"%s#%s\"".format(serviceURN, method)
+            )
+            connection.setMethod(HttpConnection.Method.POST)
+            connection.setPayload(payload)
+            connection.execute()
+            val code: Int = connection.getResponseCode()
+            if (code == 200) {
+                command.responseListener?.let {
+                    Util.postSuccess(it, connection.getResponseString())
                 }
+            } else {
+                command.responseListener?.let {
+                    Util.postError(it, ServiceCommandError.getError(code))
+                }
+            }
+        } catch (e: IOException) {
+            command.responseListener?.let {
+                Util.postError(
+                    it, ServiceCommandError(0, e.message, null)
+                )
             }
         }
     }
 
     @Throws(IOException::class)
-    fun createHttpConnection(targetURL: String): HttpConnection {
+    open fun createHttpConnection(targetURL: String): HttpConnection {
         return HttpConnection.newInstance(Url(targetURL))
     }
 
@@ -856,12 +828,14 @@ class DLNAService constructor(
         return (xml.trim { it <= ' ' }.substring(0, 4) == "&lt;")
     }
 
-    fun parseData(response: String, key: String): String {/*if (isXmlEncoded(response)) {
+    fun parseData(response: String, key: String): String? {
+
+        /*if (isXmlEncoded(response)) {
             response = Html.fromHtml(response).toString()
         }*/
-        val parser = Xml.parse(response ?: "")
+        val parser = Xml.parse(response)
         try {
-            return parser[key].text/*var event: Int
+            return parser.findChild(key)?.text/*var event: Int
             var isFound: Boolean = false
             do {
                 event = parser.next()
@@ -881,10 +855,7 @@ class DLNAService constructor(
     }
 
     fun convertStrTimeFormatToLong(strTime: String): Long {
-        val time1 = LocalDateTime.parse(strTime)
-        val time2 = LocalDateTime.parse("00:00:00")
-        return time1.toInstant(TimeZone.UTC).toEpochMilliseconds() - time2.toInstant(TimeZone.UTC)
-            .toEpochMilliseconds()
+        return runCatching { LocalTime.parse(strTime).toMillisecondOfDay().toLong() }.getOrDefault(0)
 
         /*val df: SimpleDateFormat = SimpleDateFormat("HH:mm:ss")
         try {
@@ -909,6 +880,7 @@ class DLNAService constructor(
         val responseListener: ResponseListener<Any?> = object : ResponseListener<Any?> {
             override suspend fun onSuccess(response: Any?) {
                 val transportState: String = parseData(response as String, "CurrentTransportState")
+                    ?: throw Exception("CurrentTransportState not found!")
                 val status: PlayStateStatus =
                     PlayStateStatus.convertTransportStateToPlayStateStatus(transportState)
 
@@ -1036,7 +1008,7 @@ class DLNAService constructor(
         Util.runInBackground {
             var myIpAddress: String? = null
             try {
-                myIpAddress = Util.getHostAddress()
+                myIpAddress = Util.getIpAddress()
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -1238,7 +1210,8 @@ class DLNAService constructor(
 
         val responseListener: ResponseListener<Any?> = object : ResponseListener<Any?> {
             override suspend fun onSuccess(response: Any?) {
-                val currentVolume: String = parseData(response as String, "CurrentVolume")
+                val currentVolume: String =
+                    parseData(response as String, "CurrentVolume") ?: throw Exception("CurrentVolume not found!")
                 val iVolume: Int = 0
                 try {
                     currentVolume.toInt()
@@ -1289,7 +1262,8 @@ class DLNAService constructor(
 
         val responseListener: ResponseListener<Any?> = object : ResponseListener<Any?> {
             override suspend fun onSuccess(response: Any?) {
-                val currentMute: String = parseData(response as String, "CurrentMute")
+                val currentMute: String =
+                    parseData(response as String, "CurrentMute") ?: throw Exception("CurrentMute not found!")
                 val isMute: Boolean = currentMute.toBoolean()
 
                 if (listener != null) {
@@ -1335,7 +1309,7 @@ class DLNAService constructor(
         val CONNECTION_MANAGER_URN: String = "urn:schemas-upnp-org:service:ConnectionManager:1"
         val RENDERING_CONTROL_URN: String = "urn:schemas-upnp-org:service:RenderingControl:1"
 
-        protected val AV_TRANSPORT: String = "AVTransport"
+        val AV_TRANSPORT: String = "AVTransport"
         protected val CONNECTION_MANAGER: String = "ConnectionManager"
         protected val RENDERING_CONTROL: String = "RenderingControl"
         protected val GROUP_RENDERING_CONTROL: String = "GroupRenderingControl"
@@ -1350,11 +1324,10 @@ class DLNAService constructor(
             return DiscoveryFilter(ID, "urn:schemas-upnp-org:device:MediaRenderer:1")
         }
 
-        fun getServiceProvider() =
-            DeviceServiceProvider(kClass = DLNAService::class, constructor = { serviceDescription, serviceConfig ->
-                DLNAService(serviceDescription, serviceConfig)
-            }, discoverFilter = {
-                discoveryFilter()
-            })
+        fun getServiceProvider() = DeviceServiceProvider(kClass = DLNAService::class, constructor = { serviceDescription, serviceConfig ->
+            DLNAService(serviceDescription, serviceConfig)
+        }, discoverFilter = {
+            discoveryFilter()
+        })
     }
 }

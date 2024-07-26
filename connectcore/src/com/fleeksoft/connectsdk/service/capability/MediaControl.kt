@@ -96,22 +96,22 @@ interface MediaControl : CapabilityMethods {
      */
     fun getMediaControlCapabilityLevel(): CapabilityPriorityLevel?
 
-    suspend fun play(listener: ResponseListener<Any?>)
+    suspend fun play(listener: ResponseListener<Any?>?)
 
-    suspend fun pause(listener: ResponseListener<Any?>)
+    suspend fun pause(listener: ResponseListener<Any?>?)
 
-    suspend fun stop(listener: ResponseListener<Any?>)
+    suspend fun stop(listener: ResponseListener<Any?>?)
 
-    suspend fun rewind(listener: ResponseListener<Any?>)
+    suspend fun rewind(listener: ResponseListener<Any?>?)
 
-    suspend fun fastForward(listener: ResponseListener<Any?>)
+    suspend fun fastForward(listener: ResponseListener<Any?>?)
 
     /**
      * @param position The new position, in milliseconds from the beginning of the stream
      * @param listener (optional) ResponseListener< Object > with methods to be called on success
      * or failure
      */
-    suspend fun seek(position: Long, listener: ResponseListener<Any?>)
+    suspend fun seek(position: Long, listener: ResponseListener<Any?>?)
 
     /**
      * Get the current media duration in milliseconds

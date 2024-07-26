@@ -92,7 +92,8 @@ open class ZeroconfDiscoveryProvider : DiscoveryProvider {
     }
 
     init {
-        runCatching { srcAddress = Util.getIpAddress() }.onFailure { it.printStackTrace() }
+        // TODO: fix this 
+        GlobalScope.launch { runCatching { srcAddress = Util.getIpAddress() }.onFailure { it.printStackTrace() } }
     }
 
     override suspend fun start() {

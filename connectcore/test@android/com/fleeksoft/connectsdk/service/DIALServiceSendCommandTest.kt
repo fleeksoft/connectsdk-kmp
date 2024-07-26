@@ -2,7 +2,7 @@ package com.fleeksoft.connectsdk.service
 
 import com.fleeksoft.connectsdk.MainDispatcherRule
 import com.fleeksoft.connectsdk.helper.HttpConnection
-import com.fleeksoft.connectsdk.etc.helper.HttpMessage
+import com.fleeksoft.connectsdk.helper.HttpMessage
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener
 import com.fleeksoft.connectsdk.service.command.ServiceCommand
 import com.fleeksoft.connectsdk.service.config.ServiceConfig
