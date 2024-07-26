@@ -1,0 +1,7 @@
+product: jvm/app
+
+dependencies:
+    - ../shared
+
+settings:
+    compose: enabled

@@ -1,0 +1,10 @@
+product: android/app
+
+dependencies:
+    - ../shared
+
+settings:
+    compose: enabled
+    android:
+        applicationId: com.fleeksoft.connectsdkkmp
+        namespace: com.fleeksoft.connectsdkkmp
