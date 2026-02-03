@@ -1,18 +1,21 @@
 product:
-    type: lib
-    platforms: [android, jvm, iosArm64, iosSimulatorArm64, iosX64]
+  type: lib
+  platforms: [ android, jvm, iosArm64, iosSimulatorArm64, iosX64 ]
 
 dependencies:
-    - $compose.foundation: exported
-    - $compose.material3: exported
-    - ../../connectcore: exported
+  - $compose.foundation: exported
+  - $compose.material3: exported
+  - ../../connectcore: exported
+  - $libs.compose.material.icons.extended
 
 dependencies@android:
-    - androidx.activity:activity-compose:1.7.2: exported
-    - androidx.appcompat:appcompat:1.6.1: exported
+  - $libs.androidx.activity.compose: exported
+  - $libs.androidx.appcompat: exported
 
 dependencies@jvm:
-    - $compose.desktop.currentOs
+  - $compose.desktop.currentOs
 
 settings:
-    compose: enabled
+  compose: enabled
+  kotlin:
+    version: 2.3.0

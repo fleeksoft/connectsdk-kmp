@@ -11,7 +11,7 @@ import kotlinx.coroutines.IO
 class SSDPClient private constructor(
     var localInAddress: InetSocketAddress,
     var multicastSocket: MulticastSocketKmp = MulticastSocketKmp(PORT),
-    var datagramSocket: BoundDatagramSocket = aSocket(SelectorManager(Dispatchers.IO)).udp().bind(localInAddress),
+    var datagramSocket: BoundDatagramSocket/* = aSocket(SelectorManager(Dispatchers.IO)).udp().bind(localInAddress),*/
 ) {
     var timeout: Int = 0
 
@@ -96,8 +96,12 @@ class SSDPClient private constructor(
         suspend fun create(
             localInAddress: InetSocketAddress,
             multicastSocket: MulticastSocketKmp = MulticastSocketKmp(PORT),
-            datagramSocket: BoundDatagramSocket = aSocket(SelectorManager(Dispatchers.IO)).udp().bind(localInAddress),
+            datagramSocket: BoundDatagramSocket? = null,
         ): SSDPClient {
+            var datagramSocket = datagramSocket
+            if (datagramSocket == null) {
+                datagramSocket = aSocket(SelectorManager(Dispatchers.IO)).udp().bind(localInAddress)
+            }
             return SSDPClient(
                 localInAddress = localInAddress,
                 multicastSocket = multicastSocket,

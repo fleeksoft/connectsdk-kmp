@@ -3,7 +3,7 @@ product:
   platforms: [ jvm, android, iosArm64, iosSimulatorArm64, iosX64 ]
 
 aliases:
-  - jvmAndAndroid: [android, jvm]
+  - jvmAndAndroid: [ android, jvm ]
 
 dependencies:
   - $libs.kotlinx.serialization
@@ -40,8 +40,11 @@ test-dependencies@jvmAndAndroid:
   - $libs.mockito.core
   - $libs.mockito.inline
   - $libs.mockito.kotlin
-  - $libs.xmlunit
+  - xmlunit:xmlunit:1.6
 
 settings:
   kotlin:
-    serialization: json
+    serialization:
+      format: json
+      version: 1.10.0
+    version: 2.3.0

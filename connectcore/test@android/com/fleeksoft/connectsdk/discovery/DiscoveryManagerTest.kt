@@ -11,7 +11,7 @@ import org.junit.Test
  * Created by oleksii.frolov on 2/16/2015.
  */
 class DiscoveryManagerTest {
-    private var discovery = DiscoveryManager()
+    private var discovery = DiscoveryManager.getInstance()
 
     @Test
     fun testUnregisterDeviceServiceWithWrongArguments() = runTest {

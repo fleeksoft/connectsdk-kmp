@@ -1,20 +1,17 @@
 package com.fleeksoft.connectsdk.helper
 
-import io.ktor.client.request.delete
-import io.ktor.client.request.header
-import io.ktor.client.request.put
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.Url
-import io.ktor.http.content.ByteArrayContent
-import io.ktor.utils.io.core.readUTF8Line
-import io.ktor.utils.io.core.toByteArray
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.utils.io.core.*
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.core.RSocketConnector
 import io.rsocket.kotlin.payload.buildPayload
 import io.rsocket.kotlin.payload.data
-import io.rsocket.kotlin.transport.ktor.tcp.TcpClientTransport
+import io.rsocket.kotlin.transport.ktor.tcp.KtorTcpClientTransport
+import kotlinx.coroutines.Job
+import kotlinx.io.readLine
 
 /**
  * HTTP connection implementation based on this article
@@ -172,7 +169,8 @@ abstract class HttpConnection {
     private class CustomConnectionClient(url: Url) : HttpURLConnectionClient(url) {
         override suspend fun execute() {
             val port = if (url.port > 0) url.port else 80
-            val transport = TcpClientTransport(url.host, port)
+            val parentContext = Job()
+            val transport = KtorTcpClientTransport(parentContext) {}.target(url.host, port)
             val connector = RSocketConnector {
                 //configuration goes here
             }
@@ -208,7 +206,7 @@ abstract class HttpConnection {
             // receive response
             val sb = StringBuilder()
             val reader = payloadResponse.data
-            var line: String? = reader.readUTF8Line()
+            var line: String? = reader.readLine()
             if (line != null) {
                 val tokens = line.split(" ".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
                 if (tokens.size > 2) {
@@ -216,17 +214,17 @@ abstract class HttpConnection {
                 }
             }
 
-            while (null != (reader.readUTF8Line().also { line = it })) {
+            while (null != (reader.readLine().also { line = it })) {
                 if (line!!.isEmpty()) {
                     break
                 }
-                val pair = line!!.split(":".toRegex(), limit = 2).toTypedArray()
+                val pair = line.split(":".toRegex(), limit = 2).toTypedArray()
                 if (pair.size == 2) {
                     responseHeaders[pair[0].trim { it <= ' ' }] = pair[1].trim { it <= ' ' }
                 }
             }
 
-            while (null != (reader.readUTF8Line().also { line = it })) {
+            while (null != (reader.readLine().also { line = it })) {
                 sb.append(line)
                 sb.append("\r\n")
             }

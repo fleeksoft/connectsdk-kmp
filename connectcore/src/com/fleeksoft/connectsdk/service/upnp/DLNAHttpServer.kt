@@ -7,40 +7,26 @@ import com.fleeksoft.connectsdk.ported.getString
 import com.fleeksoft.connectsdk.service.capability.MediaControl.PlayStateStatus
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener
 import com.fleeksoft.connectsdk.service.command.URLServiceSubscription
-import io.ktor.network.sockets.*
+import io.ktor.utils.io.*
 import io.rsocket.kotlin.RSocket
 import io.rsocket.kotlin.RSocketRequestHandler
 import io.rsocket.kotlin.core.RSocketServer
 import io.rsocket.kotlin.payload.Payload
 import io.rsocket.kotlin.payload.buildPayload
 import io.rsocket.kotlin.payload.data
-import io.rsocket.kotlin.transport.ktor.tcp.TcpServer
-import io.rsocket.kotlin.transport.ktor.tcp.TcpServerTransport
-import korlibs.io.stream.AsyncStream
-import korlibs.io.stream.CharReader
+import io.rsocket.kotlin.transport.ktor.tcp.KtorTcpServerInstance
+import io.rsocket.kotlin.transport.ktor.tcp.KtorTcpServerTransport
 import korlibs.io.stream.openAsync
-import korlibs.io.util.CharReaderStrReader
 import korlibs.io.util.StrReader
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.coroutines.*
+import kotlinx.serialization.json.*
 import kotlin.concurrent.Volatile
-import kotlin.jvm.Synchronized
 
 class DLNAHttpServer {
     val port: Int = 49291
 
     @Volatile
-    var welcomeSocket: TcpServer? = null
+    var welcomeSocket: KtorTcpServerInstance? = null
 
     @Volatile
     var isRunning: Boolean = false
@@ -61,13 +47,15 @@ class DLNAHttpServer {
         isRunning = true
 
 
+
         scope.launch {
             try {
-                val transport = TcpServerTransport("0.0.0.0", port)
+                val parentContext = Job()
+                val transport = KtorTcpServerTransport(parentContext).target("0.0.0.0", port)
                 val connector = RSocketServer {
                     //configuration goes here
                 }
-                welcomeSocket = connector.bindIn(scope, transport) {
+                welcomeSocket = connector.startServer(transport) {
                     RSocketRequestHandler {
                         //handler for request/response
                         requestResponse { request: Payload ->
@@ -77,7 +65,7 @@ class DLNAHttpServer {
                         }
                     }
                 }
-                welcomeSocket?.handlerJob?.join()
+                welcomeSocket?.coroutineContext?.job?.join() // wait for server to finish
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -94,9 +82,9 @@ class DLNAHttpServer {
         }
         subscriptions.clear()
 
-        if (welcomeSocket != null && !welcomeSocket!!.handlerJob.isCancelled) {
+        if (welcomeSocket != null && !welcomeSocket!!.coroutineContext.job.isCancelled) {
             try {
-                welcomeSocket!!.serverSocket.cancel()
+                welcomeSocket!!.cancel()
             } catch (ex: Exception) {
                 ex.printStackTrace()
             }
@@ -192,7 +180,7 @@ class DLNAHttpServer {
 
         if ((entry.containsKey("Volume") && !entry.containsKey("channel")) ||
             (entry.containsKey("Volume") &&
-                entry["channel"]?.jsonPrimitive?.contentOrNull == "Master")
+                    entry["channel"]?.jsonPrimitive?.contentOrNull == "Master")
         ) {
             val intVolume = entry["Volume"]!!.jsonPrimitive.int
             val volume: Float = intVolume.toFloat() / 100
@@ -210,7 +198,7 @@ class DLNAHttpServer {
 
         if ((entry.containsKey("Mute") && !entry.containsKey("channel"))
             || (entry.containsKey("Mute")
-                && entry["channel"]?.jsonPrimitive?.contentOrNull == "Master")
+                    && entry["channel"]?.jsonPrimitive?.contentOrNull == "Master")
         ) {
             val muteStatus = entry["Mute"]!!.jsonPrimitive.content
 

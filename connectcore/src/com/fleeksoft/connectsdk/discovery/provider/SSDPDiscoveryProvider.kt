@@ -34,7 +34,7 @@ import io.ktor.http.*
 import io.ktor.network.sockets.*
 import korlibs.io.lang.IOException
 import kotlinx.coroutines.*
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 open class SSDPDiscoveryProvider : DiscoveryProvider {
     var needToStartSearch: Boolean = false

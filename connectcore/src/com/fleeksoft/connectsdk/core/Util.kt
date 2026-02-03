@@ -5,7 +5,7 @@ import com.fleeksoft.connectsdk.service.capability.listeners.ErrorListener
 import com.fleeksoft.connectsdk.service.capability.listeners.ResponseListener
 import com.fleeksoft.connectsdk.service.command.ServiceCommandError
 import kotlinx.coroutines.*
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 
 object Util {
     var T: String = "Connect SDK"

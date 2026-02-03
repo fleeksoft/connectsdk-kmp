@@ -125,7 +125,7 @@ class SSDPDeviceTest {
         Assert.assertEquals("http://hostname", device.serviceURI)
         Assert.assertEquals("http://hostname:80", device.baseURL)
         Assert.assertEquals("WEBOS1", device.modelNumber)
-        Assert.assertEquals(4, device.serviceList.length)
+        Assert.assertEquals(4, device.serviceList.size)
 //        todo: add more test code for services list
     }
 
